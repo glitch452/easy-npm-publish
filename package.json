@@ -1,0 +1,92 @@
+{
+  "name": "easy-npm-publish",
+  "version": "0.0.0",
+  "description": "Use Conventional Commits to automatically update the package version, update the git tags and publish the package.",
+  "module": "dist/index.js",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build:w": "npm run build -- --watch",
+    "build": "npm run clean && ncc build src/index.ts -o dist --source-map --license licenses.txt",
+    "clean": "rimraf dist",
+    "format:ci": "prettier --check '**.{mjs,cjs,js,json,md,ts,yaml,yml}'",
+    "format": "prettier --write .",
+    "lint:ci": "eslint '**/*.{mjs,cjs,js,ts}'",
+    "lint:nc": "eslint '**/*.{mjs,cjs,js,ts}' --report-unused-disable-directives --fix",
+    "lint": "eslint '**/*.{mjs,cjs,js,ts}' --cache --report-unused-disable-directives --fix",
+    "pre-commit": "lint-staged --config lint-staged.config.js",
+    "prepare": "husky || true",
+    "test:ci": "vitest run --config vite.config.ci.ts --coverage",
+    "test:w": "vitest",
+    "test": "vitest run --coverage",
+    "type": "tsc --noEmit -p tsconfig.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/glitch452/easy-npm-publish.git"
+  },
+  "keywords": [
+    "npm",
+    "package",
+    "publish",
+    "conventional",
+    "commit",
+    "auto",
+    "version",
+    "github",
+    "action"
+  ],
+  "author": "David Dearden",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/glitch452/easy-npm-publish/issues"
+  },
+  "homepage": "https://github.com/glitch452/easy-npm-publish#readme",
+  "dependencies": {
+    "@actions/core": "^1.10.1",
+    "@actions/exec": "^1.1.1",
+    "@actions/github": "^6.0.0",
+    "chardet": "^2.0.0",
+    "semver": "^7.6.3",
+    "simple-git": "^3.25.0",
+    "yaml": "^2.4.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.3.0",
+    "@commitlint/config-conventional": "^19.2.2",
+    "@eslint/eslintrc": "^3.1.0",
+    "@eslint/js": "^9.7.0",
+    "@total-typescript/ts-reset": "^0.5.1",
+    "@types/eslint__eslintrc": "^2.1.2",
+    "@types/eslint__js": "^8.42.3",
+    "@types/eslint-config-prettier": "^6.11.3",
+    "@types/node": "^20.14.12",
+    "@typescript-eslint/eslint-plugin": "^7.17.0",
+    "@typescript-eslint/parser": "^7.17.0",
+    "@vercel/ncc": "^0.38.1",
+    "@vitest/coverage-v8": "^1.6.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^3.6.1",
+    "eslint-plugin-disable-autofix": "^5.0.1",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jsdoc": "^48.8.3",
+    "eslint-plugin-typescript-enum": "^2.1.0",
+    "eslint-plugin-unused-imports": "^3.2.0",
+    "eslint-plugin-vitest": "^0.4.1",
+    "globals": "^15.8.0",
+    "husky": "^9.1.1",
+    "lint-staged": "^15.2.7",
+    "prettier": "^3.3.3",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^7.17.0",
+    "vitest": "^1.6.0"
+  }
+}
