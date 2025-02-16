@@ -49,7 +49,7 @@ jobs:
       - name: Check Formatting
         run: npm run format:ci
 
-      - name: Typescript Type Checks
+      - name: Run Typescript Type Checks
         run: npm run type
 
       - name: Run Linter
