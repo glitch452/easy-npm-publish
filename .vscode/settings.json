@@ -5,7 +5,7 @@
   "files.eol": "\n",
   "files.insertFinalNewline": true,
 
-  "eslint.experimental.useFlatConfig": true,
+  "eslint.useFlatConfig": true,
   "editor.codeActionsOnSave": { "source.fixAll.eslint": "explicit" },
   "eslint.options": {
     "overrideConfig": {
@@ -37,7 +37,9 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "prettier.prettierPath": "node_modules/prettier",
 
-  "cSpell.enableFiletypes": ["github-actions-workflow"],
+  "cSpell.enabledFileTypes": {
+    "github-actions-workflow": true
+  },
   "cSpell.words": [
     "autofix",
     "chardet",
