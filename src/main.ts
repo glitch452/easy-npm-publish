@@ -151,7 +151,11 @@ export async function run() {
           ...github.context.repo,
           commit_sha: github.context.sha,
         });
-        return response.data[0]?.title || newTag;
+        const releaseTitle = response.data[0]?.title;
+        if (!releaseTitle) {
+          return newTag;
+        }
+        return inputs.prependVersionToReleaseTitle ? `${newTag} - ${releaseTitle}` : releaseTitle;
       }
       return newTag;
     };

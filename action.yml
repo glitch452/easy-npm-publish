@@ -53,6 +53,11 @@ inputs:
     description:
       The path to the directory containing the package to be published. It must be a relative path, relative to the root
       of the repository. It defaults to the root of the repository.
+  prepend-version-to-release-title:
+    description:
+      'Whether to prepend the release version to the release title. Note: this only applies when
+      `get-release-title-from-pr` is `true`.'
+    default: 'false'
   private:
     description: Whether to publish the package as a `private` package.
     default: 'false'
