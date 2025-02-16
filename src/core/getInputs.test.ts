@@ -249,6 +249,20 @@ describe(getInputs.name, () => {
     });
   });
 
+  describe('prepend-version-to-release-title', () => {
+    it('Should return false for "prepend-version-to-release-title" if a value is not provided', () => {
+      lookup['prepend-version-to-release-title'] = '';
+      const actual = getInputs(getters).prependVersionToReleaseTitle;
+      expect(actual).toStrictEqual(false);
+    });
+
+    it('Should return true for "prepend-version-to-release-title" if it is set to a true value', () => {
+      lookup['prepend-version-to-release-title'] = 'true';
+      const actual = getInputs(getters).prependVersionToReleaseTitle;
+      expect(actual).toStrictEqual(true);
+    });
+  });
+
   describe('scriptsPackageDirectory', () => {
     it('Should return the default "scripts-package-directory" if it and the "package-directory" are not provided', () => {
       lookup['package-directory'] = '';
