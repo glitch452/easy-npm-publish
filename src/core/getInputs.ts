@@ -24,8 +24,8 @@ export function getInputs(getters: Getters = core) {
   const inputs = {
     changelogTitles: { ...DEFAULT_TYPE_TITLES, ...changelogTitles },
     dryRun: getters.getBooleanInput('dry-run'),
-    enableGitTagging: !getters.getBooleanInput('disable-git-tagging'),
     enableGithubRelease: getters.getBooleanInput('enable-github-release'),
+    enableGitTagging: !getters.getBooleanInput('disable-git-tagging'),
     getReleaseTitleFromPr: getters.getBooleanInput('get-release-title-from-pr'),
     githubToken: getters.getInput('github-token'),
     gitTagSuffix: getters.getInput('git-tag-suffix'),
@@ -35,6 +35,7 @@ export function getInputs(getters: Getters = core) {
     npmrcContent: getters.getInput('npmrc-content'),
     npmrcPath: getters.getInput('npmrc-path') || path.join(process.env.HOME ?? '', '.npmrc'),
     packageDirectory: getters.getInput('package-directory') || '.',
+    prependVersionToReleaseTitle: getters.getBooleanInput('prepend-version-to-release-title'),
     private: getters.getBooleanInput('private'),
     registryToken: getters.getInput('registry-token', { required: true }),
     releaseTitle: getters.getInput('release-title'),
