@@ -10,11 +10,17 @@ git tags and publish the package.
 
 - [Easy NPM Publish](#easy-npm-publish)
   - [Table of Contents](#table-of-contents)
+  - [What's New](#whats-new)
   - [Features](#features)
   - [Inputs](#inputs)
   - [Outputs](#outputs)
   - [Example Usage](#example-usage)
   - [License](#license)
+
+## What's New
+
+Check out the [GitHub Releases](https://github.com/glitch452/easy-npm-publish/releases) page for the latest release
+notes.
 
 ## Features
 
