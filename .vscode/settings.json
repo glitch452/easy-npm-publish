@@ -5,26 +5,25 @@
   "files.eol": "\n",
   "files.insertFinalNewline": true,
 
-  "eslint.useFlatConfig": true,
   "editor.codeActionsOnSave": { "source.fixAll.eslint": "explicit" },
-  "eslint.options": {
-    "overrideConfig": {
-      "rules": {
-        // The following rules are auto-fixable, but can be inconvenient when they run on save
-        // with work-in-progress. Instead, they can be run on the pre-commit hook (and caught in the
-        // CI pipeline if someone forgets to setup or disables the hooks)
-        "no-useless-return": "off",
-        "unused-imports/no-unused-imports": "off",
-        "@typescript-eslint/prefer-readonly": "off",
-        "jsdoc/no-blank-blocks": "off",
-        // Make these show as warnings in the editor without enabling auto-fix
-        "disable-autofix/no-useless-return": "warn",
-        "disable-autofix/unused-imports/no-unused-imports": "warn",
-        "disable-autofix/@typescript-eslint/prefer-readonly": "warn",
-        "disable-autofix/jsdoc/no-blank-blocks": "warn"
-      }
-    }
-  },
+
+  "eslint.validate": ["markdown"],
+  "eslint.format.enable": false,
+  "eslint.useFlatConfig": true,
+  // The following rules are auto-fixable, but can be inconvenient when they run on save.
+  // Instead, they can be run on the pre-commit hook and/or the CI pipeline.
+  "eslint.codeActionsOnSave.rules": [
+    "!no-useless-return",
+    "!unused-imports/no-unused-imports",
+    "!@typescript-eslint/prefer-readonly",
+    "!jsdoc/no-blank-blocks",
+    "!vitest/no-focused-tests",
+    "*"
+  ],
+  "eslint.rules.customizations": [
+    { "rule": "*", "fixable": true, "severity": "warn" },
+    { "rule": "*", "fixable": false, "severity": "error" }
+  ],
 
   "[github-actions-workflow]": { "editor.defaultFormatter": "esbenp.prettier-vscode", "editor.formatOnSave": true },
   "[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode", "editor.formatOnSave": true },

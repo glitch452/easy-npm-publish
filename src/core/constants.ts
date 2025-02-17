@@ -13,4 +13,5 @@ export const DEFAULT_TYPE_TITLES = {
   test: 'Tests',
 } as const;
 
+// eslint-disable-next-line security/detect-unsafe-regex -- Not concerned about blocking the event loop
 export const CONVENTIONAL_COMMIT_REGEX = /^(?<type>[^(!:]+)(?:\((?<scope>[^)]*)\))?!?:\s*(?<description>.+)$/;

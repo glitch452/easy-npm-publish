@@ -32,6 +32,7 @@ describe(getInputs.name, () => {
   describe('action.yaml', () => {
     it('Should contain exactly the inputs that are requested in the action', () => {
       const actionFilePath = path.join(import.meta.dirname, '..', '..', 'action.yml');
+      // eslint-disable-next-line security/detect-non-literal-fs-filename
       const actionFile = yaml.parse(fs.readFileSync(actionFilePath).toString());
 
       getInputs(getters);
@@ -73,13 +74,13 @@ describe(getInputs.name, () => {
     it('Should return false for "dry-run" if a value is not provided', () => {
       lookup['dry-run'] = '';
       const actual = getInputs(getters).dryRun;
-      expect(actual).toStrictEqual(false);
+      expect(actual).toBe(false);
     });
 
     it('Should return true for "dry-run" if it is set to a true value', () => {
       lookup['dry-run'] = 'true';
       const actual = getInputs(getters).dryRun;
-      expect(actual).toStrictEqual(true);
+      expect(actual).toBe(true);
     });
   });
 
@@ -87,19 +88,19 @@ describe(getInputs.name, () => {
     it('Should return true for enableGithubRelease when "enable-github-release" is true', () => {
       lookup['enable-github-release'] = 'true';
       const actual = getInputs(getters).enableGithubRelease;
-      expect(actual).toStrictEqual(true);
+      expect(actual).toBe(true);
     });
 
     it('Should return false for enableGithubRelease when "enable-github-release" is false', () => {
       lookup['enable-github-release'] = 'false';
       const actual = getInputs(getters).enableGithubRelease;
-      expect(actual).toStrictEqual(false);
+      expect(actual).toBe(false);
     });
 
     it('Should return false for enableGithubRelease when "enable-github-release" is not provided', () => {
       lookup['enable-github-release'] = '';
       const actual = getInputs(getters).enableGithubRelease;
-      expect(actual).toStrictEqual(false);
+      expect(actual).toBe(false);
     });
   });
 
@@ -107,13 +108,13 @@ describe(getInputs.name, () => {
     it('Should return false for "get-release-title-from-pr" if a value is not provided', () => {
       lookup['get-release-title-from-pr'] = '';
       const actual = getInputs(getters).getReleaseTitleFromPr;
-      expect(actual).toStrictEqual(false);
+      expect(actual).toBe(false);
     });
 
     it('Should return true for "get-release-title-from-pr" if it is set to a true value', () => {
       lookup['get-release-title-from-pr'] = 'true';
       const actual = getInputs(getters).getReleaseTitleFromPr;
-      expect(actual).toStrictEqual(true);
+      expect(actual).toBe(true);
     });
   });
 
@@ -121,19 +122,19 @@ describe(getInputs.name, () => {
     it('Should return false for enableGitTagging when "disable-git-tagging" is true', () => {
       lookup['disable-git-tagging'] = 'true';
       const actual = getInputs(getters).enableGitTagging;
-      expect(actual).toStrictEqual(false);
+      expect(actual).toBe(false);
     });
 
     it('Should return true for enableGitTagging when "disable-git-tagging" is false', () => {
       lookup['disable-git-tagging'] = 'false';
       const actual = getInputs(getters).enableGitTagging;
-      expect(actual).toStrictEqual(true);
+      expect(actual).toBe(true);
     });
 
     it('Should return true for enableGitTagging when "disable-git-tagging" is not provided', () => {
       lookup['disable-git-tagging'] = '';
       const actual = getInputs(getters).enableGitTagging;
-      expect(actual).toStrictEqual(true);
+      expect(actual).toBe(true);
     });
   });
 
@@ -148,7 +149,7 @@ describe(getInputs.name, () => {
     it('Should return the provided "github-token"', () => {
       lookup['github-token'] = '<githubToken>';
       const actual = getInputs(getters).githubToken;
-      expect(actual).toStrictEqual('<githubToken>');
+      expect(actual).toBe('<githubToken>');
     });
   });
 
@@ -156,7 +157,7 @@ describe(getInputs.name, () => {
     it('Should return the provided "git-tag-suffix"', () => {
       lookup['git-tag-suffix'] = '<gitTagSuffix>';
       const actual = getInputs(getters).gitTagSuffix;
-      expect(actual).toStrictEqual('<gitTagSuffix>');
+      expect(actual).toBe('<gitTagSuffix>');
     });
   });
 
@@ -164,13 +165,13 @@ describe(getInputs.name, () => {
     it('Should return the default "latest-tag-name" if it is not provided', () => {
       lookup['latest-tag-name'] = '';
       const actual = getInputs(getters).latestTagName;
-      expect(actual).toStrictEqual('latest');
+      expect(actual).toBe('latest');
     });
 
     it('Should return the provided "latest-tag-name"', () => {
       lookup['latest-tag-name'] = '<latestTagName>';
       const actual = getInputs(getters).latestTagName;
-      expect(actual).toStrictEqual('<latestTagName>');
+      expect(actual).toBe('<latestTagName>');
     });
   });
 
@@ -206,7 +207,7 @@ describe(getInputs.name, () => {
     it('Should return the provided "npmrc-content"', () => {
       lookup['npmrc-content'] = '<npmrcContent>\nLine2';
       const actual = getInputs(getters).npmrcContent;
-      expect(actual).toStrictEqual('<npmrcContent>\nLine2');
+      expect(actual).toBe('<npmrcContent>\nLine2');
     });
   });
 
@@ -224,14 +225,14 @@ describe(getInputs.name, () => {
       const old = process.env.HOME;
       delete process.env.HOME;
       const actual = getInputs(getters).npmrcPath;
-      expect(actual).toStrictEqual('.npmrc');
+      expect(actual).toBe('.npmrc');
       process.env.HOME = old;
     });
 
     it('Should return the provided "npmrc-path"', () => {
       lookup['npmrc-path'] = '<npmrcPath>';
       const actual = getInputs(getters).npmrcPath;
-      expect(actual).toStrictEqual('<npmrcPath>');
+      expect(actual).toBe('<npmrcPath>');
     });
   });
 
@@ -239,13 +240,13 @@ describe(getInputs.name, () => {
     it('Should return the default "package-directory" if it is not provided', () => {
       lookup['package-directory'] = '';
       const actual = getInputs(getters).packageDirectory;
-      expect(actual).toStrictEqual('.');
+      expect(actual).toBe('.');
     });
 
     it('Should return the provided "package-directory"', () => {
       lookup['package-directory'] = '<packageDirectory>';
       const actual = getInputs(getters).packageDirectory;
-      expect(actual).toStrictEqual('<packageDirectory>');
+      expect(actual).toBe('<packageDirectory>');
     });
   });
 
@@ -253,13 +254,13 @@ describe(getInputs.name, () => {
     it('Should return false for "prepend-version-to-release-title" if a value is not provided', () => {
       lookup['prepend-version-to-release-title'] = '';
       const actual = getInputs(getters).prependVersionToReleaseTitle;
-      expect(actual).toStrictEqual(false);
+      expect(actual).toBe(false);
     });
 
     it('Should return true for "prepend-version-to-release-title" if it is set to a true value', () => {
       lookup['prepend-version-to-release-title'] = 'true';
       const actual = getInputs(getters).prependVersionToReleaseTitle;
-      expect(actual).toStrictEqual(true);
+      expect(actual).toBe(true);
     });
   });
 
@@ -268,20 +269,20 @@ describe(getInputs.name, () => {
       lookup['package-directory'] = '';
       lookup['scripts-package-directory'] = '';
       const actual = getInputs(getters).scriptsPackageDirectory;
-      expect(actual).toStrictEqual('.');
+      expect(actual).toBe('.');
     });
 
     it('Should return the "package-directory" value if one is provided and the "scripts-package-directory" is not provided', () => {
       lookup['package-directory'] = '<packageDirectory>';
       lookup['scripts-package-directory'] = '';
       const actual = getInputs(getters).scriptsPackageDirectory;
-      expect(actual).toStrictEqual('<packageDirectory>');
+      expect(actual).toBe('<packageDirectory>');
     });
 
     it('Should return the provided "scripts-package-directory"', () => {
       lookup['scripts-package-directory'] = '<scriptsPackageDirectory>';
       const actual = getInputs(getters).scriptsPackageDirectory;
-      expect(actual).toStrictEqual('<scriptsPackageDirectory>');
+      expect(actual).toBe('<scriptsPackageDirectory>');
     });
   });
 
@@ -289,13 +290,13 @@ describe(getInputs.name, () => {
     it('Should return false for "private" if a value is not provided', () => {
       lookup.private = '';
       const actual = getInputs(getters).private;
-      expect(actual).toStrictEqual(false);
+      expect(actual).toBe(false);
     });
 
     it('Should return true for "private" if it is set to a true value', () => {
       lookup.private = 'true';
       const actual = getInputs(getters).private;
-      expect(actual).toStrictEqual(true);
+      expect(actual).toBe(true);
     });
   });
 
@@ -309,45 +310,45 @@ describe(getInputs.name, () => {
     it('Should return the registry token', () => {
       lookup['registry-token'] = '<registryToken>';
       const actual = getInputs(getters).registryToken;
-      expect(actual).toStrictEqual('<registryToken>');
+      expect(actual).toBe('<registryToken>');
     });
   });
 
   describe('registryUrl', () => {
     it('Should return the default registry url if a value is not provided', () => {
       const actual = getInputs(getters).registryUrl.href;
-      expect(actual).toStrictEqual('https://registry.npmjs.org/');
+      expect(actual).toBe('https://registry.npmjs.org/');
     });
 
     it('Should return the registry url', () => {
       lookup['registry-url'] = 'https://registry-url.com';
       const actual = getInputs(getters).registryUrl.href;
-      expect(actual).toStrictEqual('https://registry-url.com/');
+      expect(actual).toBe('https://registry-url.com/');
     });
 
     it('Should return the registry url using https if no protocol is provided', () => {
       lookup['registry-url'] = 'registry-url.com';
       const actual = getInputs(getters).registryUrl.href;
-      expect(actual).toStrictEqual('https://registry-url.com/');
+      expect(actual).toBe('https://registry-url.com/');
     });
 
     it('Should return the registry url using http if the http protocol is provided', () => {
       lookup['registry-url'] = 'http://registry-url.com';
       const actual = getInputs(getters).registryUrl.href;
-      expect(actual).toStrictEqual('http://registry-url.com/');
+      expect(actual).toBe('http://registry-url.com/');
     });
   });
 
   describe('releaseTitle', () => {
     it('Should return an empty string if a value is not provided', () => {
       const actual = getInputs(getters).releaseTitle;
-      expect(actual).toStrictEqual('');
+      expect(actual).toBe('');
     });
 
     it('Should return the provided "release-title"', () => {
       lookup['release-title'] = '<releaseTitle>';
       const actual = getInputs(getters).releaseTitle;
-      expect(actual).toStrictEqual('<releaseTitle>');
+      expect(actual).toBe('<releaseTitle>');
     });
   });
 
@@ -355,13 +356,13 @@ describe(getInputs.name, () => {
     it('Should return null if no "version-override" is provided', () => {
       lookup['version-override'] = '';
       const actual = getInputs(getters).versionOverride;
-      expect(actual).toStrictEqual(null);
+      expect(actual).toBeNull();
     });
 
     it('Should return the provided "version-override"', () => {
       lookup['version-override'] = '0.1.2';
       const actual = getInputs(getters).versionOverride?.version;
-      expect(actual).toStrictEqual('0.1.2');
+      expect(actual).toBe('0.1.2');
     });
 
     it('Should throw an error if the "version-override" is not a valid semver value', () => {
