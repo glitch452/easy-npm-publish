@@ -11,6 +11,7 @@ git tags and publish the package.
   - [Inputs](#inputs)
   - [Outputs](#outputs)
   - [Example Usage](#example-usage)
+  - [License](#license)
 
 ## Features
 
@@ -102,3 +103,8 @@ jobs:
           echo "${{ toJSON(steps.publish_npm.outputs) }}"
           echo "${{ toJSON(steps.publish_github.outputs) }}"
 ```
+
+## License
+
+The scripts and documentation in this project are released under the [MIT License](LICENSE) as defined by the
+[Open Source Initiative](https://opensource.org/license/mit).
