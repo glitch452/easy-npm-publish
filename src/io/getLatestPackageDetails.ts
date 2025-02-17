@@ -37,7 +37,9 @@ export async function getLatestPackageDetails(
     if (response.status === NOT_FOUND) {
       return;
     }
-    throw new Error(`Fetch request failed using url "${url}". Error: ${response.status} "${response.statusText}".`);
+    throw new Error(
+      `Fetch request failed using url "${url.toString()}". Error: ${response.status} "${response.statusText}".`,
+    );
   }
 
   const data = registryMetadataSchema.parse(await response.json());

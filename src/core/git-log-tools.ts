@@ -5,6 +5,7 @@ export interface GitLogEntry {
 }
 
 export function createIsMajorChange(majorTypes: readonly string[]) {
+  // eslint-disable-next-line security/detect-non-literal-regexp
   const majorTypesRegex = new RegExp(`^(${majorTypes.map((x) => x.toLowerCase()).join('|')})`);
 
   return (entry: GitLogEntry) => {
@@ -19,6 +20,7 @@ export function createIsMajorChange(majorTypes: readonly string[]) {
 }
 
 export function createIsMinorChange(minorTypes: readonly string[]) {
+  // eslint-disable-next-line security/detect-non-literal-regexp
   const minorTypesRegex = new RegExp(`^(${minorTypes.map((x) => x.toLowerCase()).join('|')})`);
 
   return (entry: GitLogEntry) => {

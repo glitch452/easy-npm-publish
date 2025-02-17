@@ -41,7 +41,9 @@ export async function run() {
     core.debug(`Package file contents:\n${JSON.stringify(packageJson)}`);
 
     /* Get the package details for the latest version in the registry */
-    core.info(`Reading latest package details from registry "${inputs.registryUrl}" for package "${packageJson.name}"`);
+    core.info(
+      `Reading latest package details from registry "${inputs.registryUrl.toString()}" for package "${packageJson.name}"`,
+    );
     const latestPackageDetails = await getLatestPackageDetails(
       inputs.registryUrl,
       packageJson.name,
@@ -69,12 +71,12 @@ export async function run() {
         );
       }
 
-      const currentTag = `v${currentVersion}${inputs.gitTagSuffix}`;
+      const currentTag = `v${currentVersion.toString()}${inputs.gitTagSuffix}`;
       gitHistoryRange = { fromTag: currentTag, fromSha: latestPackageDetails.gitHead, toSha: github.context.sha };
     } else if (packageJsonVersion) {
       currentVersion = packageJsonVersion;
       core.warning(
-        `The package was not found in the registry. The version from the package json "${packageJsonVersion}" will be used as the current version.`,
+        `The package was not found in the registry. The version from the package json "${packageJsonVersion.toString()}" will be used as the current version.`,
       );
     } else {
       currentVersion = semver.parse('v0.0.0');
@@ -100,8 +102,8 @@ export async function run() {
       nextVersion = semver.parse(currentVersion.version)!.inc(incrementType);
     }
 
-    core.info(`Current package version: ${currentVersion}`);
-    core.info(`Next package version: ${nextVersion}`);
+    core.info(`Current package version: ${currentVersion.toString()}`);
+    core.info(`Next package version: ${nextVersion.toString()}`);
     core.info(`Increment Type: ${incrementType ?? ''}`);
 
     /* Update the version in the package.json for the package being published */
