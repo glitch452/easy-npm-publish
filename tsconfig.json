@@ -20,6 +20,6 @@
     "target": "ES2022",
     "types": ["vitest/globals", "node"]
   },
-  "include": ["src/**/*.ts", "*.js", "*.ts"],
+  "include": ["src/**/*.ts", "__mocks__", "*.js", "*.ts"],
   "exclude": []
 }
