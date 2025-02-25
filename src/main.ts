@@ -172,7 +172,9 @@ export async function run() {
     };
 
     core.debug(`GitHub Release Details: ${JSON.stringify(releaseDetails)}`);
-    await octokit.rest.repos.createRelease(releaseDetails);
+    if (!inputs.dryRun) {
+      await octokit.rest.repos.createRelease(releaseDetails);
+    }
 
     /* Set the action outputs */
     core.setOutput('current-version', currentVersion.version);
