@@ -1,6 +1,6 @@
 import { InlineConfig } from 'vitest';
-import baseConfig from './vite.config.js';
 import { defineConfig } from 'vitest/config';
+import baseConfig from './vite.config.js';
 
 const baseVitestConfig = baseConfig.test;
 const baseCoverage: Omit<InlineConfig['coverage'], 'reporter'> | undefined = baseVitestConfig?.coverage;

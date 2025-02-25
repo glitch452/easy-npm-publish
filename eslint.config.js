@@ -1,5 +1,6 @@
 import { buildConfig } from 'eslint-config-spartan';
 import { jsDoc, mdx, prettier, typeEnabled, vitest } from 'eslint-config-spartan/mixins';
+import { files } from 'eslint-config-spartan/utils';
 
 export default buildConfig(
   typeEnabled({ parserOptions: { tsconfigRootDir: import.meta.dirname, project: './tsconfig.json' } }),
@@ -7,6 +8,12 @@ export default buildConfig(
   jsDoc,
   mdx,
   prettier,
+  {
+    files: [files.jsTsNoX],
+    rules: {
+      'import/order': ['error', { alphabetize: { order: 'asc', caseInsensitive: true }, 'newlines-between': 'never' }],
+    },
+  },
   {
     name: 'root/global-ignores',
     ignores: ['test-package/', 'node_modules/', 'coverage/', 'reports/', '.vscode/', 'dist/', '.temp/'],

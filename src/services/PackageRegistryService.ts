@@ -1,14 +1,14 @@
 import path from 'node:path';
+import { ExecOptions } from '@actions/exec';
 import {
   PackageJsonSchema,
   RegistryMetadataForVersion,
   registryMetadataForVersionSchema,
   registryMetadataSchema,
 } from '../types/schemas.js';
-import { PackageRegistry } from 'src/types/PackageRegistry.js';
-import { Logger } from 'src/types/Logger.js';
 import { FilesService } from './FilesService.js';
-import { ExecOptions } from '@actions/exec';
+import { Logger } from 'src/types/Logger.js';
+import { PackageRegistry } from 'src/types/PackageRegistry.js';
 
 const NOT_FOUND = 404;
 

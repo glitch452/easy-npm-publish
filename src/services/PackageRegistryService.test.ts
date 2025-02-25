@@ -1,10 +1,10 @@
 import { fs, vol } from 'memfs';
-import { PackageRegistryService } from './PackageRegistryService.js';
-import { FilesService } from './FilesService.js';
-import { PackageJsonSchema } from 'src/types/schemas.js';
-import { server } from '../../vitest.setup.js';
 import { HttpResponse, http } from 'msw';
+import { server } from '../../vitest.setup.js';
+import { FilesService } from './FilesService.js';
+import { PackageRegistryService } from './PackageRegistryService.js';
 import { getLoggerMock } from '__mocks__/getLoggerMock.js';
+import { PackageJsonSchema } from 'src/types/schemas.js';
 
 vi.mock('node:fs');
 

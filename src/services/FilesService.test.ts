@@ -1,5 +1,5 @@
-import { FilesService } from './FilesService.js';
 import { fs, vol } from 'memfs';
+import { FilesService } from './FilesService.js';
 
 vi.mock('node:fs');
 

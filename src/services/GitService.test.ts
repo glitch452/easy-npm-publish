@@ -1,5 +1,5 @@
-import { getGitMock } from '__mocks__/getGitMock.js';
 import { GitService } from './GitService.js';
+import { getGitMock } from '__mocks__/getGitMock.js';
 import { getLoggerMock } from '__mocks__/getLoggerMock.js';
 
 describe(GitService.name, () => {
