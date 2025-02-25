@@ -54,8 +54,8 @@ describe(run.name, () => {
   const registryDetails = { name: 'name', version: '1.0.0', gitHead: 'gitHead' };
 
   beforeEach(() => {
-    process.env.GITHUB_WORKSPACE = repoDir;
-    process.env.HOME = homeDir;
+    vi.stubEnv('GITHUB_WORKSPACE', repoDir);
+    vi.stubEnv('HOME', homeDir);
     fs.mkdirSync(homeDir);
     fs.mkdirSync(repoDir);
     fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson));
@@ -67,6 +67,7 @@ describe(run.name, () => {
   afterEach(() => {
     vol.reset();
     vi.clearAllMocks();
+    vi.unstubAllEnvs();
   });
 
   it('should set all of the output values defined in the action.yml file', async () => {
@@ -77,7 +78,7 @@ describe(run.name, () => {
   });
 
   it('should fail with an Error if the "GITHUB_WORKSPACE" env var is not set', async () => {
-    delete process.env.GITHUB_WORKSPACE;
+    vi.stubEnv('GITHUB_WORKSPACE', undefined);
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
     const expected = new Error(
       'Unable to retrieve the current working directory using environment variable "GITHUB_WORKSPACE".',
