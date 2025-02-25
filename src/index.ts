@@ -1,9 +1,9 @@
-import { run } from './core/run.js';
 import * as core from '@actions/core';
-import * as github from '@actions/github';
 import { exec } from '@actions/exec';
-import { GitService } from './services/GitService.js';
+import * as github from '@actions/github';
+import { run } from './core/run.js';
 import { FilesService } from './services/FilesService.js';
+import { GitService } from './services/GitService.js';
 import { PackageRegistryService } from './services/PackageRegistryService.js';
 
 const logger = core;
