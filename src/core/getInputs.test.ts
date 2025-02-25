@@ -12,6 +12,10 @@ describe(getInputs.name, () => {
     workflowMock.reset(true);
   });
 
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   describe('action.yml', () => {
     const actionFilePath = path.join(import.meta.dirname, '..', '..', 'action.yml');
     const actionFile = yaml.parse(fs.readFileSync(actionFilePath).toString());
@@ -215,11 +219,9 @@ describe(getInputs.name, () => {
 
     it('should return the default "npmrc-path" if it is not provided and HOME is not set', () => {
       workflowMock.clearInputValue('npmrc-path');
-      const old = process.env.HOME;
-      delete process.env.HOME;
+      vi.stubEnv('HOME', undefined);
       const actual = getInputs(workflowMock).npmrcPath;
       expect(actual).toBe('.npmrc');
-      process.env.HOME = old;
     });
 
     it('should return the provided "npmrc-path"', () => {
