@@ -1,5 +1,5 @@
-import { InlineConfig } from 'vitest';
 import { defineConfig } from 'vitest/config';
+import { type InlineConfig } from 'vitest/node';
 import baseConfig from './vite.config.js';
 
 const baseVitestConfig = baseConfig.test;
