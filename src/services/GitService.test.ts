@@ -76,97 +76,97 @@ describe(GitService.name, () => {
         expect(gitMock.fetch).toHaveBeenCalledExactlyOnceWith(['--unshallow']);
       });
     });
-  });
 
-  describe('With a range provided', () => {
-    const history = [
-      {
-        hash: 'hash1',
-        date: 'date1',
-        message: 'message1',
-        refs: 'refs1',
-        body: 'body1',
-        author_name: 'author_name1',
-        author_email: 'author_email1',
-      },
-      {
-        hash: 'hash2',
-        date: 'date2',
-        message: 'message2',
-        refs: 'refs2',
-        body: 'body2',
-        author_name: 'author_name2',
-        author_email: 'author_email2',
-      },
-    ];
+    describe('With a range provided', () => {
+      const history = [
+        {
+          hash: 'hash1',
+          date: 'date1',
+          message: 'message1',
+          refs: 'refs1',
+          body: 'body1',
+          author_name: 'author_name1',
+          author_email: 'author_email1',
+        },
+        {
+          hash: 'hash2',
+          date: 'date2',
+          message: 'message2',
+          refs: 'refs2',
+          body: 'body2',
+          author_name: 'author_name2',
+          author_email: 'author_email2',
+        },
+      ];
 
-    it('should call fetch with the "--unshallow" flag if the repo is shallow and the fromTag and latest tags are not found', async () => {
-      const range = { fromTag: 'fromTag', fromSha: 'fromSha', toSha: 'toSha' };
-      await gitService.getHistory(range);
-      expect(gitMock.fetch).toHaveBeenCalledWith(['--unshallow']);
-    });
+      it('should call fetch with the "--unshallow" flag if the repo is shallow and the fromTag and latest tags are not found', async () => {
+        const range = { fromTag: 'fromTag', fromSha: 'fromSha', toSha: 'toSha' };
+        await gitService.getHistory(range);
+        expect(gitMock.fetch).toHaveBeenCalledWith(['--unshallow']);
+      });
 
-    it('should return the history when the fromTag is found', async () => {
-      const range = { fromTag: 'fromTag', fromSha: 'fromSha', toSha: 'toSha' };
-      gitMock.tags.mockResolvedValue({ all: [range.fromTag] });
-      gitMock.raw.mockImplementation((args) => (args[0] === 'rev-list' ? range.fromSha : ''));
-      gitMock.log.mockResolvedValue({ all: history });
-      const actual = await gitService.getHistory(range);
-      expect(actual).toStrictEqual(history);
-    });
+      it('should return the history when the fromTag is found', async () => {
+        const range = { fromTag: 'fromTag', fromSha: 'fromSha', toSha: 'toSha' };
+        gitMock.tags.mockResolvedValue({ all: [range.fromTag] });
+        gitMock.raw.mockImplementation((args) => (args[0] === 'rev-list' ? range.fromSha : ''));
+        gitMock.log.mockResolvedValue({ all: history });
+        const actual = await gitService.getHistory(range);
+        expect(actual).toStrictEqual(history);
+      });
 
-    it('should return the history when the fromTag is not found but the latest tag is found', async () => {
-      const range = { fromTag: 'fromTag', fromSha: 'latestSha', toSha: 'toSha' };
-      gitMock.tags.mockResolvedValue({ all: ['latest'] });
-      gitMock.raw.mockImplementation((args) => (args[0] === 'rev-list' ? 'latestSha' : ''));
-      gitMock.log.mockResolvedValue({ all: history });
-      const actual = await gitService.getHistory(range);
-      expect(actual).toStrictEqual(history);
-    });
+      it('should return the history when the fromTag is not found but the latest tag is found', async () => {
+        const range = { fromTag: 'fromTag', fromSha: 'latestSha', toSha: 'toSha' };
+        gitMock.tags.mockResolvedValue({ all: ['latest'] });
+        gitMock.raw.mockImplementation((args) => (args[0] === 'rev-list' ? 'latestSha' : ''));
+        gitMock.log.mockResolvedValue({ all: history });
+        const actual = await gitService.getHistory(range);
+        expect(actual).toStrictEqual(history);
+      });
 
-    it('should throw when the fromTag is not found but the latest tag is found but the fromSha does not match the tag', async () => {
-      const range = { fromTag: 'fromTag', fromSha: 'fromSha', toSha: 'toSha' };
-      gitMock.tags.mockResolvedValue({ all: ['latest'] });
-      gitMock.raw.mockImplementation((args) => (args[0] === 'rev-list' ? 'latestSha' : ''));
-      gitMock.log.mockResolvedValue({ all: history });
-      const actual = gitService.getHistory(range);
-      await expect(actual).rejects.toThrow('From SHA does not match the SHA for tag');
-    });
+      it('should throw when the fromTag is not found but the latest tag is found but the fromSha does not match the tag', async () => {
+        const range = { fromTag: 'fromTag', fromSha: 'fromSha', toSha: 'toSha' };
+        gitMock.tags.mockResolvedValue({ all: ['latest'] });
+        gitMock.raw.mockImplementation((args) => (args[0] === 'rev-list' ? 'latestSha' : ''));
+        gitMock.log.mockResolvedValue({ all: history });
+        const actual = gitService.getHistory(range);
+        await expect(actual).rejects.toThrow('From SHA does not match the SHA for tag');
+      });
 
-    it('should throw when the fromTag is found but the fromSha does not match the tag', async () => {
-      const range = { fromTag: 'fromTag', fromSha: 'fromSha', toSha: 'toSha' };
-      gitMock.tags.mockResolvedValue({ all: ['latest'] });
-      gitMock.raw.mockImplementation((args) => (args[0] === 'rev-list' ? 'otherSha' : ''));
-      gitMock.log.mockResolvedValue({ all: history });
-      const actual = gitService.getHistory(range);
-      await expect(actual).rejects.toThrow('From SHA does not match the SHA for tag');
-    });
+      it('should throw when the fromTag is found but the fromSha does not match the tag', async () => {
+        const range = { fromTag: 'fromTag', fromSha: 'fromSha', toSha: 'toSha' };
+        gitMock.tags.mockResolvedValue({ all: ['latest'] });
+        gitMock.raw.mockImplementation((args) => (args[0] === 'rev-list' ? 'otherSha' : ''));
+        gitMock.log.mockResolvedValue({ all: history });
+        const actual = gitService.getHistory(range);
+        await expect(actual).rejects.toThrow('From SHA does not match the SHA for tag');
+      });
 
-    it('should return an empty history list the fromTag matches the toSha', async () => {
-      const range = { fromTag: 'fromTag', fromSha: 'toSha', toSha: 'toSha' };
-      gitMock.tags.mockResolvedValue({ all: [range.fromTag] });
-      gitMock.raw.mockImplementation((args) => (args[0] === 'rev-list' ? range.fromSha : ''));
-      const actual = await gitService.getHistory(range);
-      expect(actual).toStrictEqual([]);
-    });
+      it('should return an empty history list the fromTag matches the toSha', async () => {
+        const range = { fromTag: 'fromTag', fromSha: 'toSha', toSha: 'toSha' };
+        gitMock.tags.mockResolvedValue({ all: [range.fromTag] });
+        gitMock.raw.mockImplementation((args) => (args[0] === 'rev-list' ? range.fromSha : ''));
+        const actual = await gitService.getHistory(range);
+        expect(actual).toStrictEqual([]);
+      });
 
-    it('should call fetch with "--shallow-exclude" before "--deepen" when the repo is shallow', async () => {
-      const range = { fromTag: 'fromTag', fromSha: 'fromSha', toSha: 'toSha' };
-      gitMock.tags.mockResolvedValue({ all: [range.fromTag] });
-      gitMock.raw.mockImplementation((args) => (args[0] === 'rev-list' ? range.fromSha : ''));
-      await gitService.getHistory(range);
-      const actual = gitMock.fetch.mock.calls.map(([arg1]) => arg1);
-      const expected = [['--tags'], ['--shallow-exclude', range.fromTag], ['--deepen', '1']];
-      expect(actual).toStrictEqual(expected);
-    });
+      it('should call fetch with "--shallow-exclude" before "--deepen" when the repo is shallow', async () => {
+        const range = { fromTag: 'fromTag', fromSha: 'fromSha', toSha: 'toSha' };
+        gitMock.tags.mockResolvedValue({ all: [range.fromTag] });
+        gitMock.raw.mockImplementation((args) => (args[0] === 'rev-list' ? range.fromSha : ''));
+        await gitService.getHistory(range);
+        const actual = gitMock.fetch.mock.calls.map(([arg1]) => arg1);
+        const expected = [['--tags'], ['--shallow-exclude', range.fromTag], ['--deepen', '1']];
+        expect(actual).toStrictEqual(expected);
+      });
 
-    it('should not throw when the repo is not shallow and the fromSha does not match the tagSha', async () => {
-      const range = { fromTag: 'fromTag', fromSha: 'fromSha', toSha: 'toSha' };
-      gitMock.revparse.mockResolvedValue('false\n');
-      gitMock.tags.mockResolvedValue({ all: [range.fromTag] });
-      gitMock.raw.mockImplementation((args) => (args[0] === 'rev-list' ? 'tagSha' : ''));
-      const actual = gitService.getHistory(range);
-      await expect(actual).resolves.toBeDefined();
+      it('should not throw when the repo is not shallow and the fromSha does not match the tagSha', async () => {
+        const range = { fromTag: 'fromTag', fromSha: 'fromSha', toSha: 'toSha' };
+        gitMock.revparse.mockResolvedValue('false\n');
+        gitMock.tags.mockResolvedValue({ all: [range.fromTag] });
+        gitMock.raw.mockImplementation((args) => (args[0] === 'rev-list' ? 'tagSha' : ''));
+        const actual = gitService.getHistory(range);
+        await expect(actual).resolves.toBeDefined();
+      });
     });
   });
 });
