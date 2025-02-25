@@ -22,19 +22,19 @@ inputs:
       type. These values will be merged into and override the default titles. (ex. `{ "feat": "New Features" }`)'
   disable-git-tagging:
     description: Disable setting and/or updating the git tags.
-    default: 'false'
+    default: "false"
   dry-run:
-    description: Run the action without actually publishing the package or pushing git tags.
-    default: 'false'
+    description: Run the action without actually publishing the package, pushing git tags, or creating a GitHub release.
+    default: "false"
   enable-github-release:
     description: Create a GitHub Release.
-    default: 'false'
+    default: "false"
   get-release-title-from-pr:
     description: >-
       Attempt to get the PR title from a PR associated to the git sha. If it is found, use the PR title as the release
       title. If not found, fall back to the release tag name. If the `release-title` has a truthy value, it will
       override this option. Note: The GITHUB_TOKEN requires `pull-requests: read` permissions.
-    default: 'false'
+    default: "false"
   git-tag-suffix:
     description: A value append to the git tags.
   latest-tag-name:
@@ -55,12 +55,12 @@ inputs:
       of the repository. It defaults to the root of the repository.
   prepend-version-to-release-title:
     description:
-      'Whether to prepend the release version to the release title. Note: this only applies when
-      `get-release-title-from-pr` is `true`.'
-    default: 'false'
+      "Whether to prepend the release version to the release title. Note: this only applies when
+      `get-release-title-from-pr` is `true`."
+    default: "false"
   private:
     description: Whether to publish the package as a `private` package.
-    default: 'false'
+    default: "false"
   registry-url:
     description: The URL of the package registry to publish to. It defaults to npm's registry `registry.npmjs.org`.
   release-title:
