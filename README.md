@@ -1,5 +1,8 @@
 # Easy NPM Publish
 
+[![GitHub License](https://img.shields.io/github/license/glitch452/easy-npm-publish)](https://choosealicense.com/licenses/mit/)
+[![GitHub Release](https://img.shields.io/github/v/release/glitch452/easy-npm-publish) ](https://github.com/glitch452/easy-npm-publish/releases)
+
 Use [Conventional Commits](https://www.conventionalcommits.org) to automatically update the package version, update the
 git tags and publish the package.
 
@@ -7,10 +10,17 @@ git tags and publish the package.
 
 - [Easy NPM Publish](#easy-npm-publish)
   - [Table of Contents](#table-of-contents)
+  - [What's New](#whats-new)
   - [Features](#features)
   - [Inputs](#inputs)
   - [Outputs](#outputs)
   - [Example Usage](#example-usage)
+  - [License](#license)
+
+## What's New
+
+Check out the [GitHub Releases](https://github.com/glitch452/easy-npm-publish/releases) page for the latest release
+notes.
 
 ## Features
 
@@ -34,7 +44,7 @@ git tags and publish the package.
 | `github-token`                     | `string`  | **REQUIRED / Optional** - A github token with access to write tags and releases to the repository. Required if git tagging is enabled, otherwise optional.                                                                                                                                                                                |
 | `changelog-titles`                 | `string`  | A JSON encoded object, mapping the conventional commit type to the section title to use in the changelog for that type. These values will be merged into and override the default titles. (ex. `'{ "feat": "New Features" }'`) **Default:** `'{}'`                                                                                        |
 | `disable-git-tagging`              | `boolean` | Disable setting and/or updating the git tags. **Default:** `false`                                                                                                                                                                                                                                                                        |
-| `dry-run`                          | `boolean` | Run the action without actually publishing the package or pushing git tags. **Default:** `false`                                                                                                                                                                                                                                          |
+| `dry-run`                          | `boolean` | Run the action without actually publishing the package, pushing git tags, or creating a GitHub release. **Default:** `false`                                                                                                                                                                                                              |
 | `enable-github-release`            | `boolean` | Create a GitHub Release. **Default:** `false`                                                                                                                                                                                                                                                                                             |
 | `get-release-title-from-pr`        | `boolean` | Attempt to get the PR title from a PR associated to the git sha. If it is found, use the PR title as the release title. If not found, fall back to the release tag name. If the `release-title` has a truthy value, it will override this option. Note: The GITHUB_TOKEN requires `pull-requests: read` permissions. **Default:** `false` |
 | `git-tag-suffix`                   | `string`  | A value append to the git tags. **Default:** `''`                                                                                                                                                                                                                                                                                         |
@@ -102,3 +112,8 @@ jobs:
           echo "${{ toJSON(steps.publish_npm.outputs) }}"
           echo "${{ toJSON(steps.publish_github.outputs) }}"
 ```
+
+## License
+
+The scripts and documentation in this project are released under the [MIT License](LICENSE) as defined by the
+[Open Source Initiative](https://opensource.org/license/mit).

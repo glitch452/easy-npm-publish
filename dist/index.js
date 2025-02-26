@@ -2742,7 +2742,7 @@ class HttpClient {
         }
         const usingSsl = parsedUrl.protocol === 'https:';
         proxyAgent = new undici_1.ProxyAgent(Object.assign({ uri: proxyUrl.href, pipelining: !this._keepAlive ? 0 : 1 }, ((proxyUrl.username || proxyUrl.password) && {
-            token: `${proxyUrl.username}:${proxyUrl.password}`
+            token: `Basic ${Buffer.from(`${proxyUrl.username}:${proxyUrl.password}`).toString('base64')}`
         })));
         this._proxyAgentDispatcher = proxyAgent;
         if (usingSsl && this._ignoreSslError) {
@@ -2855,11 +2855,11 @@ function getProxyUrl(reqUrl) {
     })();
     if (proxyVar) {
         try {
-            return new URL(proxyVar);
+            return new DecodedURL(proxyVar);
         }
         catch (_a) {
             if (!proxyVar.startsWith('http://') && !proxyVar.startsWith('https://'))
-                return new URL(`http://${proxyVar}`);
+                return new DecodedURL(`http://${proxyVar}`);
         }
     }
     else {
@@ -2917,6 +2917,19 @@ function isLoopbackAddress(host) {
         hostLower.startsWith('127.') ||
         hostLower.startsWith('[::1]') ||
         hostLower.startsWith('[0:0:0:0:0:0:0:1]'));
+}
+class DecodedURL extends URL {
+    constructor(url, base) {
+        super(url, base);
+        this._decodedUsername = decodeURIComponent(super.username);
+        this._decodedPassword = decodeURIComponent(super.password);
+    }
+    get username() {
+        return this._decodedUsername;
+    }
+    get password() {
+        return this._decodedPassword;
+    }
 }
 //# sourceMappingURL=proxy.js.map
 
@@ -3841,7 +3854,7 @@ module.exports = __toCommonJS(dist_src_exports);
 var import_universal_user_agent = __nccwpck_require__(3843);
 
 // pkg/dist-src/version.js
-var VERSION = "9.0.5";
+var VERSION = "9.0.6";
 
 // pkg/dist-src/defaults.js
 var userAgent = `octokit-endpoint.js/${VERSION} ${(0, import_universal_user_agent.getUserAgent)()}`;
@@ -3946,9 +3959,9 @@ function addQueryParameters(url, parameters) {
 }
 
 // pkg/dist-src/util/extract-url-variable-names.js
-var urlVariableRegex = /\{[^}]+\}/g;
+var urlVariableRegex = /\{[^{}}]+\}/g;
 function removeNonChars(variableName) {
-  return variableName.replace(/^\W+|\W+$/g, "").split(/,/);
+  return variableName.replace(/(?:^\W+)|(?:(?<!\W)\W+$)/g, "").split(/,/);
 }
 function extractUrlVariableNames(url) {
   const matches = url.match(urlVariableRegex);
@@ -4134,7 +4147,7 @@ function parse(options) {
     }
     if (url.endsWith("/graphql")) {
       if (options.mediaType.previews?.length) {
-        const previewsFromAcceptHeader = headers.accept.match(/[\w-]+(?=-preview)/g) || [];
+        const previewsFromAcceptHeader = headers.accept.match(/(?<![\w-])[\w-]+(?=-preview)/g) || [];
         headers.accept = previewsFromAcceptHeader.concat(options.mediaType.previews).map((preview) => {
           const format = options.mediaType.format ? `.${options.mediaType.format}` : "+json";
           return `application/vnd.github.${preview}-preview${format}`;
@@ -4381,7 +4394,7 @@ __export(dist_src_exports, {
 module.exports = __toCommonJS(dist_src_exports);
 
 // pkg/dist-src/version.js
-var VERSION = "9.2.1";
+var VERSION = "9.2.2";
 
 // pkg/dist-src/normalize-paginated-list-response.js
 function normalizePaginatedListResponse(response) {
@@ -4429,7 +4442,7 @@ function iterator(octokit, route, parameters) {
           const response = await requestMethod({ method, url, headers });
           const normalizedResponse = normalizePaginatedListResponse(response);
           url = ((normalizedResponse.headers.link || "").match(
-            /<([^>]+)>;\s*rel="next"/
+            /<([^<>]+)>;\s*rel="next"/
           ) || [])[1];
           return { value: normalizedResponse };
         } catch (error) {
@@ -6979,7 +6992,7 @@ var RequestError = class extends Error {
     if (options.request.headers.authorization) {
       requestCopy.headers = Object.assign({}, options.request.headers, {
         authorization: options.request.headers.authorization.replace(
-          / .*$/,
+          /(?<! ) .*$/,
           " [REDACTED]"
         )
       });
@@ -7046,7 +7059,7 @@ var import_endpoint = __nccwpck_require__(4471);
 var import_universal_user_agent = __nccwpck_require__(3843);
 
 // pkg/dist-src/version.js
-var VERSION = "8.4.0";
+var VERSION = "8.4.1";
 
 // pkg/dist-src/is-plain-object.js
 function isPlainObject(value) {
@@ -7105,7 +7118,7 @@ function fetchWrapper(requestOptions) {
       headers[keyAndValue[0]] = keyAndValue[1];
     }
     if ("deprecation" in headers) {
-      const matches = headers.link && headers.link.match(/<([^>]+)>; rel="deprecation"/);
+      const matches = headers.link && headers.link.match(/<([^<>]+)>; rel="deprecation"/);
       const deprecationLink = matches && matches.pop();
       log.warn(
         `[@octokit/request] "${requestOptions.method} ${requestOptions.url}" is deprecated. It is scheduled to be removed on ${headers.sunset}${deprecationLink ? `. See ${deprecationLink}` : ""}`
@@ -8926,13 +8939,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -21229,6 +21252,14 @@ const { isUint8Array, isArrayBuffer } = __nccwpck_require__(8253)
 const { File: UndiciFile } = __nccwpck_require__(3041)
 const { parseMIMEType, serializeAMimeType } = __nccwpck_require__(4322)
 
+let random
+try {
+  const crypto = __nccwpck_require__(7598)
+  random = (max) => crypto.randomInt(0, max)
+} catch {
+  random = (max) => Math.floor(Math.random(max))
+}
+
 let ReadableStream = globalThis.ReadableStream
 
 /** @type {globalThis['File']} */
@@ -21314,7 +21345,7 @@ function extractBody (object, keepalive = false) {
     // Set source to a copy of the bytes held by object.
     source = new Uint8Array(object.buffer.slice(object.byteOffset, object.byteOffset + object.byteLength))
   } else if (util.isFormDataLike(object)) {
-    const boundary = `----formdata-undici-0${`${Math.floor(Math.random() * 1e11)}`.padStart(11, '0')}`
+    const boundary = `----formdata-undici-0${`${random(1e11)}`.padStart(11, '0')}`
     const prefix = `--${boundary}\r\nContent-Disposition: form-data`
 
     /*! formdata-polyfill. MIT License. Jimmy Wärting <https://jimmy.warting.se/opensource> */
@@ -35441,6 +35472,13 @@ module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("net");
 
 /***/ }),
 
+/***/ 7598:
+/***/ ((module) => {
+
+module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:crypto");
+
+/***/ }),
+
 /***/ 8474:
 /***/ ((module) => {
 
@@ -37249,22 +37287,118 @@ module.exports = parseParams
 /************************************************************************/
 var __webpack_exports__ = {};
 
-// EXTERNAL MODULE: external "path"
-var external_path_ = __nccwpck_require__(6928);
-var external_path_default = /*#__PURE__*/__nccwpck_require__.n(external_path_);
 // EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
 var core = __nccwpck_require__(7484);
+// EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
+var exec = __nccwpck_require__(5236);
 // EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
 var github = __nccwpck_require__(3228);
+;// CONCATENATED MODULE: external "node:path"
+const external_node_path_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:path");
+var external_node_path_default = /*#__PURE__*/__nccwpck_require__.n(external_node_path_namespaceObject);
 // EXTERNAL MODULE: ./node_modules/semver/index.js
 var semver = __nccwpck_require__(2088);
 var semver_default = /*#__PURE__*/__nccwpck_require__.n(semver);
-// EXTERNAL MODULE: external "fs"
-var external_fs_ = __nccwpck_require__(9896);
-var external_fs_default = /*#__PURE__*/__nccwpck_require__.n(external_fs_);
-// EXTERNAL MODULE: ./node_modules/chardet/lib/index.js
-var lib = __nccwpck_require__(629);
-var lib_default = /*#__PURE__*/__nccwpck_require__.n(lib);
+;// CONCATENATED MODULE: ./src/core/constants.ts
+const DEFAULT_TYPE_TITLES = {
+    breaking: 'BREAKING CHANGES',
+    build: 'Build',
+    chore: 'Chores',
+    ci: 'Continuous Integration',
+    docs: 'Documentation',
+    feat: 'Features',
+    fix: 'Fixes',
+    perf: 'Performance Improvements',
+    refactor: 'Refactoring',
+    revert: 'Reverted Commits',
+    style: 'Code Style and Formatting',
+    test: 'Tests',
+};
+// eslint-disable-next-line security/detect-unsafe-regex -- Not concerned about blocking the event loop
+const CONVENTIONAL_COMMIT_REGEX = /^(?<type>[^(!:]+)(?:\((?<scope>[^)]*)\))?!?:\s*(?<description>.+)$/;
+
+;// CONCATENATED MODULE: ./src/core/git-log-tools.ts
+function createIsMajorChange(majorTypes) {
+    // eslint-disable-next-line security/detect-non-literal-regexp
+    const majorTypesRegex = new RegExp(`^(${majorTypes.map((x) => x.toLowerCase()).join('|')})`);
+    return (entry) => {
+        const message = entry.message.toLowerCase();
+        return !!(message.includes('!:') ||
+            entry.body.includes('BREAKING CHANGE') ||
+            entry.body.includes('BREAKING-CHANGE') ||
+            (majorTypes.length && majorTypesRegex.test(message)));
+    };
+}
+function createIsMinorChange(minorTypes) {
+    // eslint-disable-next-line security/detect-non-literal-regexp
+    const minorTypesRegex = new RegExp(`^(${minorTypes.map((x) => x.toLowerCase()).join('|')})`);
+    return (entry) => {
+        const message = entry.message.toLowerCase();
+        return !!(minorTypes.length && minorTypesRegex.test(message));
+    };
+}
+
+;// CONCATENATED MODULE: ./src/core/buildChangelog.ts
+
+
+const HASH_PREFIX_SIZE = 7;
+function buildChangeLine(description, hash, repoMeta, scope) {
+    const parts = ['-'];
+    if (scope) {
+        parts.push(`${scope}:`);
+    }
+    const hashLink = `([${hash.slice(0, HASH_PREFIX_SIZE)}](https://github.com/${repoMeta.owner}/${repoMeta.repo}/commit/${hash}))`;
+    parts.push(description, hashLink);
+    return parts.join(' ');
+}
+function buildChangelog(gitHistory, repoMeta, typeTitles = DEFAULT_TYPE_TITLES, majorTypes = []) {
+    const isMajorChange = createIsMajorChange(majorTypes);
+    const changesByType = new Map();
+    for (const entry of gitHistory) {
+        const match = CONVENTIONAL_COMMIT_REGEX.exec(entry.message)?.groups;
+        if (!match) {
+            continue;
+        }
+        const { type: _type, scope, description } = match;
+        const type = isMajorChange(entry) ? 'breaking' : _type;
+        const change = buildChangeLine(description, entry.hash, repoMeta, scope);
+        const list = changesByType.get(type);
+        if (list) {
+            list.push(change);
+        }
+        else {
+            changesByType.set(type, [change]);
+        }
+    }
+    const outputLines = [];
+    const breakingChanges = changesByType.get('breaking');
+    if (breakingChanges) {
+        changesByType.delete('breaking');
+        outputLines.push(`## ${typeTitles.breaking || 'BREAKING CHANGES'}`, ...breakingChanges, '');
+    }
+    for (const [type, lines] of changesByType) {
+        outputLines.push(`## ${typeTitles[type] || type}`, ...lines, '');
+    }
+    return outputLines.join('\n');
+}
+
+;// CONCATENATED MODULE: ./src/core/getIncrementType.ts
+
+function getIncrementType(gitHistory, majorTypes, minorTypes) {
+    let incrementType = 'patch';
+    const isMajorChange = createIsMajorChange(majorTypes);
+    const isMinorChange = createIsMinorChange(minorTypes);
+    for (const entry of gitHistory) {
+        if (isMajorChange(entry)) {
+            return 'major';
+        }
+        if (incrementType === 'patch' && isMinorChange(entry)) {
+            incrementType = 'minor';
+        }
+    }
+    return incrementType;
+}
+
 ;// CONCATENATED MODULE: ./node_modules/zod/lib/index.mjs
 var util;
 (function (util) {
@@ -41672,7 +41806,205 @@ var z = /*#__PURE__*/Object.freeze({
 
 
 
-;// CONCATENATED MODULE: ./src/io/schemas.ts
+;// CONCATENATED MODULE: ./src/core/getInputs.ts
+
+
+
+
+function getInputs(getters) {
+    const originals = {
+        changelogTitles: getters.getInput('changelog-titles'),
+        versionOverride: getters.getInput('version-override'),
+        registryUrl: getters.getInput('registry-url') || 'registry.npmjs.org',
+    };
+    const versionOverride = originals.versionOverride ? semver_default().parse(originals.versionOverride) : undefined;
+    if (originals.versionOverride && !versionOverride) {
+        throw new Error(`The version override "${originals.versionOverride}" is not a valid semver string.`);
+    }
+    const changelogTitles = z.record(z.string()).parse(JSON.parse(originals.changelogTitles || '{}'));
+    const inputs = {
+        changelogTitles: { ...DEFAULT_TYPE_TITLES, ...changelogTitles },
+        dryRun: getters.getBooleanInput('dry-run'),
+        enableGithubRelease: getters.getBooleanInput('enable-github-release'),
+        enableGitTagging: !getters.getBooleanInput('disable-git-tagging'),
+        getReleaseTitleFromPr: getters.getBooleanInput('get-release-title-from-pr'),
+        githubToken: getters.getInput('github-token'),
+        gitTagSuffix: getters.getInput('git-tag-suffix'),
+        latestTagName: getters.getInput('latest-tag-name') || 'latest',
+        majorTypes: getters.getInput('major-types').split(',').filter(Boolean),
+        minorTypes: (getters.getInput('minor-types') || 'feat').split(',').filter(Boolean),
+        npmrcContent: getters.getInput('npmrc-content'),
+        npmrcPath: getters.getInput('npmrc-path') || external_node_path_default().join(process.env.HOME ?? '', '.npmrc'),
+        packageDirectory: getters.getInput('package-directory') || '.',
+        prependVersionToReleaseTitle: getters.getBooleanInput('prepend-version-to-release-title'),
+        private: getters.getBooleanInput('private'),
+        registryToken: getters.getInput('registry-token', { required: true }),
+        releaseTitle: getters.getInput('release-title'),
+        registryUrl: new URL(originals.registryUrl.startsWith('http') ? originals.registryUrl : `https://${originals.registryUrl}`),
+        scriptsPackageDirectory: getters.getInput('scripts-package-directory') || getters.getInput('package-directory') || '.',
+        versionOverride,
+    };
+    if (inputs.enableGitTagging && !inputs.githubToken) {
+        throw new Error('The "github-token" input was not provided. It is required when git tagging is enabled.');
+    }
+    return inputs;
+}
+
+;// CONCATENATED MODULE: ./src/core/run.ts
+
+
+
+
+
+const JSON_INDENT = 2;
+async function run(logger, workflow, github, git, files, registry) {
+    try {
+        /* Initialization */
+        const cwd = process.env.GITHUB_WORKSPACE;
+        if (!cwd) {
+            throw new Error('Unable to retrieve the current working directory using environment variable "GITHUB_WORKSPACE".');
+        }
+        const inputs = getInputs(workflow);
+        const octokit = github.getOctokit(inputs.githubToken);
+        const packagePath = external_node_path_default().join(cwd, inputs.packageDirectory, 'package.json');
+        const scriptsPackagePath = external_node_path_default().join(cwd, inputs.scriptsPackageDirectory, 'package.json');
+        /* Setup .npmrc for npm commands */
+        logger.startGroup('Writing .npmrc file');
+        const npmrcContents = inputs.npmrcContent || files.createNpmrc(inputs);
+        logger.debug(`Writing .npmrc file at "${inputs.npmrcPath}":\n${npmrcContents}`);
+        files.writeNpmrc(inputs.npmrcPath, npmrcContents);
+        logger.endGroup();
+        /* Get the package.json for the package to publish */
+        logger.info(`Reading package file at "${packagePath}"`);
+        const packageJson = files.readPackageJson(packagePath);
+        logger.debug(`Package file contents:\n${JSON.stringify(packageJson)}`);
+        /* Get the package details for the latest version in the registry */
+        logger.info(`Reading latest package details from registry "${inputs.registryUrl.toString()}" for package "${packageJson.name}"`);
+        const latestPackageDetails = await registry.getLatestPackageDetails(inputs.registryUrl, packageJson.name, inputs.registryToken);
+        logger.debug(`Registry manifest contents:\n${JSON.stringify(latestPackageDetails)}`);
+        /* Get the version details */
+        const packageJsonVersion = semver_default().parse(packageJson.version);
+        let gitHistoryRange;
+        let currentVersion;
+        let nextVersion;
+        let incrementType;
+        if (latestPackageDetails) {
+            if (latestPackageDetails.gitHead === github.context.sha) {
+                logger.info('GitHub SHA matches latest release SHA, exiting.');
+                return;
+            }
+            currentVersion = semver_default().parse(latestPackageDetails.version);
+            if (!currentVersion) {
+                throw new Error(`The current version in the registry "${latestPackageDetails.version}" is not a valid semver value.`);
+            }
+            const currentTag = `v${currentVersion.toString()}${inputs.gitTagSuffix}`;
+            gitHistoryRange = { fromTag: currentTag, fromSha: latestPackageDetails.gitHead, toSha: github.context.sha };
+        }
+        else if (packageJsonVersion) {
+            currentVersion = packageJsonVersion;
+            logger.warning(`The package was not found in the registry. The version from the package json "${packageJsonVersion.toString()}" will be used as the current version.`);
+        }
+        else {
+            currentVersion = new semver.SemVer('v0.0.0');
+            logger.warning(`The package was not found in the registry. The version "v0.0.0" will be used as the current version.`);
+        }
+        const gitHistory = await git.getHistory(gitHistoryRange);
+        if (inputs.versionOverride) {
+            incrementType = semver_default().diff(currentVersion, inputs.versionOverride) ?? '';
+            nextVersion = inputs.versionOverride;
+        }
+        else {
+            logger.debug(`Using git history to determine increment type:\n${JSON.stringify(gitHistory, undefined, JSON_INDENT)}`);
+            incrementType = getIncrementType(gitHistory, inputs.majorTypes, inputs.minorTypes);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- semver.parse with semver object as input returns the same object
+            nextVersion = semver_default().parse(currentVersion.version).inc(incrementType);
+        }
+        logger.info(`Current package version: ${currentVersion.toString()}`);
+        logger.info(`Next package version: ${nextVersion.toString()}`);
+        logger.info(`Increment Type: ${incrementType}`);
+        /* Update the version in the package.json for the package being published */
+        if (packageJson.version !== nextVersion.version) {
+            packageJson.version = nextVersion.version;
+            if (inputs.dryRun) {
+                logger.info(`DRY RUN: Updating package json with next version: "${packagePath}"`);
+            }
+            else {
+                logger.debug(`Updating package json with next version: "${packagePath}"`);
+                files.writePackageJson(packagePath, packageJson);
+            }
+        }
+        /* Publish the package to the registry */
+        await registry.publishPackage(scriptsPackagePath, packagePath, packageJson, inputs.private, inputs.dryRun);
+        /* Cleanup the changes made to the git workspace */
+        if (!inputs.dryRun) {
+            await git.restore();
+        }
+        const newTag = `v${nextVersion.version}${inputs.gitTagSuffix}`;
+        /* Apply the git tags */
+        if (inputs.enableGitTagging) {
+            const newTagMinor = `v${nextVersion.major}.${nextVersion.minor}${inputs.gitTagSuffix}`;
+            const newTagMajor = `v${nextVersion.major}${inputs.gitTagSuffix}`;
+            const tags = [inputs.latestTagName, newTag, newTagMinor, newTagMajor];
+            if (inputs.dryRun) {
+                logger.info(`DRY RUN: Git tags to be added/updated: ${JSON.stringify(tags)}`);
+            }
+            else {
+                logger.debug(`Git tags to be added/updated: ${JSON.stringify(tags)}`);
+                await git.addTags(tags);
+                await git.pushTags();
+            }
+        }
+        /* Create release notes and GitHub Release */
+        if (!inputs.dryRun && inputs.enableGithubRelease) {
+            logger.info('Creating GitHub Release');
+            const getReleaseTitle = async () => {
+                if (inputs.releaseTitle) {
+                    return inputs.releaseTitle;
+                }
+                if (inputs.getReleaseTitleFromPr) {
+                    const response = await octokit.rest.repos.listPullRequestsAssociatedWithCommit({
+                        ...github.context.repo,
+                        commit_sha: github.context.sha,
+                    });
+                    const releaseTitle = response.data[0]?.title;
+                    if (!releaseTitle) {
+                        return newTag;
+                    }
+                    return inputs.prependVersionToReleaseTitle ? `${newTag} - ${releaseTitle}` : releaseTitle;
+                }
+                return newTag;
+            };
+            const releaseDetails = {
+                ...github.context.repo,
+                tag_name: newTag,
+                name: await getReleaseTitle(),
+                body: buildChangelog(gitHistory, github.context.repo, inputs.changelogTitles, inputs.majorTypes),
+                prerelease: false,
+                draft: false,
+            };
+            logger.debug(`GitHub Release Details: ${JSON.stringify(releaseDetails)}`);
+            await octokit.rest.repos.createRelease(releaseDetails);
+        }
+        /* Set the action outputs */
+        workflow.setOutput('current-version', currentVersion.version);
+        workflow.setOutput('increment-type', incrementType);
+        workflow.setOutput('next-version', nextVersion.version);
+        workflow.setOutput('next-version-major', nextVersion.major);
+        workflow.setOutput('next-version-minor', nextVersion.minor);
+        workflow.setOutput('next-version-patch', nextVersion.patch);
+    }
+    catch (error) {
+        workflow.setFailed(error instanceof Error ? error : String(error));
+    }
+}
+
+;// CONCATENATED MODULE: external "node:fs"
+const external_node_fs_namespaceObject = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("node:fs");
+var external_node_fs_default = /*#__PURE__*/__nccwpck_require__.n(external_node_fs_namespaceObject);
+// EXTERNAL MODULE: ./node_modules/chardet/lib/index.js
+var lib = __nccwpck_require__(629);
+var lib_default = /*#__PURE__*/__nccwpck_require__.n(lib);
+;// CONCATENATED MODULE: ./src/types/schemas.ts
 
 const packageJsonSchema = z
     .object({
@@ -41692,22 +42024,35 @@ const registryMetadataSchema = z.object({
     time: z.record(z.string().or(z.undefined())),
 });
 
-;// CONCATENATED MODULE: ./src/io/fs.ts
+;// CONCATENATED MODULE: ./src/services/FilesService.ts
 
 
 
-function readPackageJson(filePath) {
-    const raw = external_fs_default().readFileSync(filePath);
-    const encoding = lib_default().detect(raw);
-    const contents = new TextDecoder(encoding ?? undefined).decode(raw);
-    return packageJsonSchema.parse(JSON.parse(contents));
-}
-function writePackageJson(filePath, contents) {
-    const indent = 2;
-    external_fs_default().writeFileSync(filePath, JSON.stringify(contents, undefined, indent));
-}
-function writeNpmrc(filePath, contents) {
-    external_fs_default().writeFileSync(filePath, contents, { mode: '0600' });
+class FilesService {
+    fileSystem;
+    constructor(fileSystem = (external_node_fs_default())) {
+        this.fileSystem = fileSystem;
+    }
+    readPackageJson(filePath) {
+        const raw = this.fileSystem.readFileSync(filePath);
+        const encoding = lib_default().detect(raw) ?? undefined;
+        const contents = new TextDecoder(encoding).decode(raw);
+        return packageJsonSchema.parse(JSON.parse(contents));
+    }
+    writePackageJson(filePath, contents) {
+        const indent = 2;
+        this.fileSystem.writeFileSync(filePath, JSON.stringify(contents, undefined, indent));
+    }
+    writeNpmrc(filePath, contents) {
+        this.fileSystem.writeFileSync(filePath, contents, { mode: '0600' });
+    }
+    createNpmrc({ registryToken, registryUrl }) {
+        return [
+            `//${registryUrl.host}/:_authToken=${registryToken}`,
+            `registry=${registryUrl.href}`,
+            `strict-ssl=${registryUrl.protocol.startsWith('https')}`,
+        ].join('\n');
+    }
 }
 
 // EXTERNAL MODULE: ./node_modules/@kwsites/file-exists/dist/index.js
@@ -46518,16 +46863,17 @@ var esm_default = (/* unused pure expression or super */ null && (gitInstanceFac
 
 //# sourceMappingURL=index.js.map
 
-;// CONCATENATED MODULE: ./src/io/git.ts
+;// CONCATENATED MODULE: ./src/services/GitService.ts
 
-
-class git_Git {
+class GitService {
+    logger;
     git;
-    constructor(git = simpleGit()) {
+    constructor(logger, git = simpleGit()) {
+        this.logger = logger;
         this.git = git;
     }
     async addTags(tags) {
-        return Promise.all(tags.map(async (tag) => this.git.tag([tag, '--force'])));
+        await Promise.all(tags.map(async (tag) => this.git.tag([tag, '--force'])));
     }
     async pushTags() {
         return this.git.pushTags(['--force']);
@@ -46543,25 +46889,26 @@ class git_Git {
             const tag = tags.all.includes(range.fromTag) ? range.fromTag : tags.all.find((x) => x === 'latest');
             if (tag) {
                 if (tag === 'latest') {
-                    core.info(`Tag "${range.fromTag}" was not found, attempting to use the "latest" tag.`);
+                    this.logger.info(`Tag "${range.fromTag}" was not found, attempting to use the "latest" tag.`);
                 }
                 if (isShallow) {
+                    const tagSha = (await this.git.raw(['rev-list', '-n', '1', tag])).trim();
+                    if (range.fromSha !== tagSha) {
+                        // The tag sha should match the from sha so that the unshallow will include all the necessary commits
+                        throw new Error(`From SHA does not match the SHA for tag "${tag}"`);
+                    }
                     await this.git.fetch(['--shallow-exclude', tag]);
                     // Deepen one more to include the commit of the tag itself to be able to use it below as the `from` sha
                     await this.git.fetch(['--deepen', '1']);
                 }
-                const actualTagSha = (await this.git.raw(['rev-list', '-n', '1', tag])).trim();
-                if (range.fromSha !== actualTagSha) {
-                    throw new Error(`Latest release SHA does not match the SHA for tag "${tag}"`);
-                }
-                core.debug(`Git History Range Details: ${JSON.stringify({ tagUsed: tag, ...range })}`);
+                this.logger.debug(`Git History Range Details: ${JSON.stringify({ tagUsed: tag, ...range })}`);
                 if (range.fromSha === range.toSha) {
                     return [];
                 }
                 return (await this.git.log({ from: range.fromSha, to: range.toSha })).all;
             }
-            core.info(`Tags "${range.fromTag}" and "latest" were not found, attempting to load the full git history.`);
-            core.warning(`Retrieving the full history may cause performance issues for large repositories. Enable git tagging to prevent this.`);
+            this.logger.info(`Tags "${range.fromTag}" and "latest" were not found, attempting to load the full git history.`);
+            this.logger.warning(`Retrieving the full history may cause performance issues for large repositories. Enable git tagging to prevent this.`);
         }
         if (isShallow) {
             await this.git.fetch(['--unshallow']);
@@ -46570,407 +46917,111 @@ class git_Git {
     }
 }
 
-;// CONCATENATED MODULE: ./src/io/getLatestPackageDetails.ts
+;// CONCATENATED MODULE: ./src/services/PackageRegistryService.ts
 
 
 const NOT_FOUND = 404;
-/**
- * @param registryUrl
- * @param packageName
- * @param registryToken
- * @throws {Error} if the registry response is not a 2xx or 404 code
- * @throws {Error} if the registry response does not match the expected schema
- * @returns The package details or undefined if the registry response is a 404 (Not Found) or the latest version details
- * are not present in the response
- */
-async function getLatestPackageDetails(registryUrl, packageName, registryToken) {
-    // Attempt to get the package details from the `/latest` endpoint, which works on NPM but may not be
-    // available on other registries, such as GitHub packages, otherwise fall back to the full package details
-    const dataFromLatest = await useLatestEndpoint(registryUrl, packageName, registryToken);
-    if (dataFromLatest) {
-        core.debug('Registry details successfully retrieved from "/latest" endpoint');
-        return dataFromLatest;
+class PackageRegistryService {
+    logger;
+    files;
+    exec;
+    constructor(logger, files, exec) {
+        this.logger = logger;
+        this.files = files;
+        this.exec = exec;
     }
-    const url = new URL(encodeURIComponent(packageName), registryUrl);
-    const headers = {};
-    if (registryToken) {
-        headers.Authorization = `Bearer ${registryToken}`;
-    }
-    const response = await fetch(url, { headers });
-    if (!response.ok) {
-        if (response.status === NOT_FOUND) {
-            return;
+    async publishPackage(scriptsPackagePath, packagePath, packageJson, isPrivate, dryRun) {
+        const scriptsPackageDirectory = external_node_path_default().dirname(scriptsPackagePath);
+        const packageDirectory = external_node_path_default().dirname(packagePath);
+        const publishScriptExists = !!(scriptsPackagePath === packagePath
+            ? packageJson.scripts?.publish
+            : this.files.readPackageJson(scriptsPackagePath).scripts?.publish);
+        if (publishScriptExists) {
+            if (dryRun) {
+                this.logger.info(`DRY RUN: Running script 'npm run publish' from directory '${scriptsPackageDirectory}'`);
+            }
+            else {
+                await this.exec('npm', ['run', 'publish'], { cwd: scriptsPackageDirectory });
+            }
         }
-        throw new Error(`Fetch request failed using url "${url}". Error: ${response.status} "${response.statusText}".`);
+        else {
+            const access = isPrivate ? 'restricted' : 'public';
+            const args = ['publish', `--access=${access}`];
+            if (this.logger.isDebug()) {
+                args.push('--verbose');
+            }
+            if (dryRun) {
+                this.logger.info(`DRY RUN: Running script 'npm ${args.join(' ')}' from directory '${packageDirectory}'`);
+            }
+            else {
+                await this.exec('npm', args, { cwd: packageDirectory });
+            }
+        }
     }
-    const data = registryMetadataSchema.parse(await response.json());
-    return data.versions[data['dist-tags'].latest];
-}
-async function useLatestEndpoint(registryUrl, packageName, registryToken) {
-    try {
-        const url = new URL(`${encodeURIComponent(packageName)}/latest`, registryUrl);
+    /**
+     * @param registryUrl
+     * @param packageName
+     * @param registryToken
+     * @throws {Error} if the registry response is not a 2xx or 404 code
+     * @throws {Error} if the registry response does not match the expected schema
+     * @returns The package details or undefined if the registry response is a 404 (Not Found) or the latest version
+     * details are not present in the response
+     */
+    async getLatestPackageDetails(registryUrl, packageName, registryToken) {
+        // Attempt to get the package details from the `/latest` endpoint, which works on NPM but may not be
+        // available on other registries, such as GitHub packages; otherwise, fall back to the full package details
+        const dataFromLatest = await this.useLatestEndpoint(registryUrl, packageName, registryToken);
+        if (dataFromLatest) {
+            this.logger.debug('Registry details successfully retrieved from "/latest" endpoint');
+            return dataFromLatest;
+        }
+        const url = new URL(encodeURIComponent(packageName), registryUrl);
         const headers = {};
         if (registryToken) {
             headers.Authorization = `Bearer ${registryToken}`;
         }
         const response = await fetch(url, { headers });
-        if (response.ok) {
-            return registryMetadataForVersionSchema.parse(await response.json());
-        }
-    }
-    catch (e) {
-        /* empty */
-    }
-}
-
-;// CONCATENATED MODULE: ./src/core/constants.ts
-const DEFAULT_TYPE_TITLES = {
-    breaking: 'BREAKING CHANGES',
-    build: 'Build',
-    chore: 'Chores',
-    ci: 'Continuous Integration',
-    docs: 'Documentation',
-    feat: 'Features',
-    fix: 'Fixes',
-    perf: 'Performance Improvements',
-    refactor: 'Refactoring',
-    revert: 'Reverted Commits',
-    style: 'Code Style and Formatting',
-    test: 'Tests',
-};
-const CONVENTIONAL_COMMIT_REGEX = /^(?<type>[^(!:]+)(?:\((?<scope>[^)]*)\))?!?:\s*(?<description>.+)$/;
-
-;// CONCATENATED MODULE: ./src/core/getInputs.ts
-
-
-
-
-
-function getInputs(getters = core) {
-    const originals = {
-        changelogTitles: getters.getInput('changelog-titles'),
-        versionOverride: getters.getInput('version-override'),
-        registryUrl: getters.getInput('registry-url') || 'registry.npmjs.org',
-    };
-    const versionOverride = originals.versionOverride ? semver_default().parse(originals.versionOverride) : null;
-    if (originals.versionOverride && !versionOverride) {
-        throw new Error(`The version override "${originals.versionOverride}" is not a valid semver string.`);
-    }
-    const changelogTitles = z.record(z.string()).parse(JSON.parse(originals.changelogTitles || '{}'));
-    const inputs = {
-        changelogTitles: { ...DEFAULT_TYPE_TITLES, ...changelogTitles },
-        dryRun: getters.getBooleanInput('dry-run'),
-        enableGithubRelease: getters.getBooleanInput('enable-github-release'),
-        enableGitTagging: !getters.getBooleanInput('disable-git-tagging'),
-        getReleaseTitleFromPr: getters.getBooleanInput('get-release-title-from-pr'),
-        githubToken: getters.getInput('github-token'),
-        gitTagSuffix: getters.getInput('git-tag-suffix'),
-        latestTagName: getters.getInput('latest-tag-name') || 'latest',
-        majorTypes: getters.getInput('major-types').split(',').filter(Boolean),
-        minorTypes: (getters.getInput('minor-types') || 'feat').split(',').filter(Boolean),
-        npmrcContent: getters.getInput('npmrc-content'),
-        npmrcPath: getters.getInput('npmrc-path') || external_path_default().join(process.env.HOME ?? '', '.npmrc'),
-        packageDirectory: getters.getInput('package-directory') || '.',
-        prependVersionToReleaseTitle: getters.getBooleanInput('prepend-version-to-release-title'),
-        private: getters.getBooleanInput('private'),
-        registryToken: getters.getInput('registry-token', { required: true }),
-        releaseTitle: getters.getInput('release-title'),
-        registryUrl: new URL(originals.registryUrl.startsWith('http') ? originals.registryUrl : `https://${originals.registryUrl}`),
-        scriptsPackageDirectory: getters.getInput('scripts-package-directory') || getters.getInput('package-directory') || '.',
-        versionOverride,
-    };
-    if (inputs.enableGitTagging && !inputs.githubToken) {
-        throw new Error('The "github-token" input was not provided. It is required when git tagging is enabled.');
-    }
-    return inputs;
-}
-
-;// CONCATENATED MODULE: ./src/core/createNpmrc.ts
-function createNpmrc({ registryToken, registryUrl }) {
-    return [
-        `//${registryUrl.host}/:_authToken=${registryToken}`,
-        `registry=${registryUrl.href}`,
-        `strict-ssl=${registryUrl.protocol.startsWith('https')}`,
-    ].join('\n');
-}
-
-;// CONCATENATED MODULE: ./src/core/git-log-tools.ts
-function createIsMajorChange(majorTypes) {
-    const majorTypesRegex = new RegExp(`^(${majorTypes.map((x) => x.toLowerCase()).join('|')})`);
-    return (entry) => {
-        const message = entry.message.toLowerCase();
-        return !!(message.includes('!:') ||
-            entry.body.includes('BREAKING CHANGE') ||
-            entry.body.includes('BREAKING-CHANGE') ||
-            (majorTypes.length && majorTypesRegex.test(message)));
-    };
-}
-function createIsMinorChange(minorTypes) {
-    const minorTypesRegex = new RegExp(`^(${minorTypes.map((x) => x.toLowerCase()).join('|')})`);
-    return (entry) => {
-        const message = entry.message.toLowerCase();
-        return !!(minorTypes.length && minorTypesRegex.test(message));
-    };
-}
-
-;// CONCATENATED MODULE: ./src/core/getIncrementType.ts
-
-function getIncrementType(gitHistory, majorTypes, minorTypes) {
-    let incrementType = 'patch';
-    const isMajorChange = createIsMajorChange(majorTypes);
-    const isMinorChange = createIsMinorChange(minorTypes);
-    for (const entry of gitHistory) {
-        if (isMajorChange(entry)) {
-            return 'major';
-        }
-        if (incrementType === 'patch' && isMinorChange(entry)) {
-            incrementType = 'minor';
-        }
-    }
-    return incrementType;
-}
-
-// EXTERNAL MODULE: ./node_modules/@actions/exec/lib/exec.js
-var exec = __nccwpck_require__(5236);
-;// CONCATENATED MODULE: ./src/io/publishPackage.ts
-
-
-
-
-async function publishPackage(scriptsPackagePath, packagePath, packageJson, isPrivate, dryRun) {
-    const scriptsPackageDirectory = external_path_default().dirname(scriptsPackagePath);
-    const packageDirectory = external_path_default().dirname(packagePath);
-    const publishScriptExists = !!(scriptsPackagePath === packagePath
-        ? packageJson.scripts?.publish
-        : readPackageJson(scriptsPackagePath).scripts?.publish);
-    if (publishScriptExists) {
-        if (dryRun) {
-            core.info(`DRY RUN: Running script 'npm run publish' from directory '${scriptsPackageDirectory}'`);
-        }
-        else {
-            await (0,exec.exec)('npm', ['run', 'publish'], { cwd: scriptsPackageDirectory });
-        }
-    }
-    else {
-        const access = isPrivate ? 'restricted' : 'public';
-        const args = ['publish', `--access=${access}`];
-        if (core.isDebug()) {
-            args.push('--verbose');
-        }
-        if (dryRun) {
-            core.info(`DRY RUN: Running script 'npm ${args.join(' ')}' from directory '${packageDirectory}'`);
-        }
-        else {
-            await (0,exec.exec)('npm', args, { cwd: packageDirectory });
-        }
-    }
-}
-
-;// CONCATENATED MODULE: ./src/core/buildChangelog.ts
-
-
-const HASH_PREFIX_SIZE = 7;
-function buildChangeLine(description, hash, repoMeta, scope) {
-    const parts = ['-'];
-    if (scope) {
-        parts.push(`${scope}:`);
-    }
-    const hashLink = `([${hash.slice(0, HASH_PREFIX_SIZE)}](https://github.com/${repoMeta.owner}/${repoMeta.repo}/commit/${hash}))`;
-    parts.push(description, hashLink);
-    return parts.join(' ');
-}
-function buildChangelog(gitHistory, repoMeta, typeTitles = DEFAULT_TYPE_TITLES, majorTypes = []) {
-    const isMajorChange = createIsMajorChange(majorTypes);
-    const changesByType = new Map();
-    for (const entry of gitHistory) {
-        const match = CONVENTIONAL_COMMIT_REGEX.exec(entry.message)?.groups;
-        if (!match) {
-            continue;
-        }
-        const { type: _type, scope, description } = match;
-        const type = isMajorChange(entry) ? 'breaking' : _type;
-        const change = buildChangeLine(description, entry.hash, repoMeta, scope);
-        const list = changesByType.get(type);
-        if (list) {
-            list.push(change);
-        }
-        else {
-            changesByType.set(type, [change]);
-        }
-    }
-    const outputLines = [];
-    const breakingChanges = changesByType.get('breaking');
-    if (breakingChanges) {
-        changesByType.delete('breaking');
-        outputLines.push(`## ${typeTitles.breaking ? typeTitles.breaking : 'BREAKING CHANGES'}`, ...breakingChanges, '');
-    }
-    for (const [type, lines] of changesByType) {
-        outputLines.push(`## ${typeTitles[type] ? typeTitles[type] : type}`, ...lines, '');
-    }
-    return outputLines.join('\n');
-}
-
-;// CONCATENATED MODULE: ./src/main.ts
-
-
-
-
-
-
-
-
-
-
-
-
-const JSON_INDENT = 2;
-async function run() {
-    try {
-        /* Initialization */
-        const cwd = process.env.GITHUB_WORKSPACE;
-        if (!cwd) {
-            throw new Error('Unable to retrieve the current working directory using environment variable "GITHUB_WORKSPACE".');
-        }
-        const inputs = getInputs();
-        const git = new git_Git();
-        const octokit = github.getOctokit(inputs.githubToken);
-        const packagePath = external_path_default().join(cwd, inputs.packageDirectory, 'package.json');
-        const scriptsPackagePath = external_path_default().join(cwd, inputs.scriptsPackageDirectory, 'package.json');
-        /* Setup .npmrc for npm commands */
-        core.startGroup('Writing .npmrc file');
-        const npmrcContents = inputs.npmrcContent || createNpmrc(inputs);
-        core.debug(`Writing .npmrc file at "${inputs.npmrcPath}":\n${npmrcContents}`);
-        writeNpmrc(inputs.npmrcPath, npmrcContents);
-        core.endGroup();
-        /* Get the package.json for the package to publish */
-        core.info(`Reading package file at "${packagePath}"`);
-        const packageJson = readPackageJson(packagePath);
-        core.debug(`Package file contents:\n${JSON.stringify(packageJson)}`);
-        /* Get the package details for the latest version in the registry */
-        core.info(`Reading latest package details from registry "${inputs.registryUrl}" for package "${packageJson.name}"`);
-        const latestPackageDetails = await getLatestPackageDetails(inputs.registryUrl, packageJson.name, inputs.registryToken);
-        core.debug(`Registry manifest contents:\n${JSON.stringify(latestPackageDetails)}`);
-        /* Get the version details */
-        const packageJsonVersion = semver_default().parse(packageJson.version);
-        let gitHistoryRange;
-        let currentVersion;
-        let nextVersion;
-        let incrementType;
-        if (latestPackageDetails) {
-            if (latestPackageDetails.gitHead === github.context.sha) {
-                core.info('GitHub SHA matches latest release SHA, exiting.');
+        if (!response.ok) {
+            if (response.status === NOT_FOUND) {
                 return;
             }
-            currentVersion = semver_default().parse(latestPackageDetails.version);
-            if (!currentVersion) {
-                throw new Error(`The current version in the registry "${latestPackageDetails.version}" is not a valid semver value.`);
-            }
-            const currentTag = `v${currentVersion}${inputs.gitTagSuffix}`;
-            gitHistoryRange = { fromTag: currentTag, fromSha: latestPackageDetails.gitHead, toSha: github.context.sha };
+            throw new Error(`Fetch request failed using url "${url.toString()}". Error: ${response.status} "${response.statusText}".`);
         }
-        else if (packageJsonVersion) {
-            currentVersion = packageJsonVersion;
-            core.warning(`The package was not found in the registry. The version from the package json "${packageJsonVersion}" will be used as the current version.`);
-        }
-        else {
-            currentVersion = semver_default().parse('v0.0.0');
-            if (!currentVersion) {
-                throw new Error('Unexpected error parsing "v0.0.0" with the semver package.');
-            }
-            core.warning(`The package was not found in the registry. The version "v0.0.0" will be used as the current version.`);
-        }
-        const gitHistory = await git.getHistory(gitHistoryRange);
-        if (inputs.versionOverride) {
-            incrementType = semver_default().diff(currentVersion, inputs.versionOverride);
-            nextVersion = inputs.versionOverride;
-        }
-        else {
-            core.debug(`Using git history to determine increment type:\n${JSON.stringify(gitHistory, undefined, JSON_INDENT)}`);
-            incrementType = getIncrementType(gitHistory, inputs.majorTypes, inputs.minorTypes);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- semver.parse with semver object as input returns the same object
-            nextVersion = semver_default().parse(currentVersion.version).inc(incrementType);
-        }
-        core.info(`Current package version: ${currentVersion}`);
-        core.info(`Next package version: ${nextVersion}`);
-        core.info(`Increment Type: ${incrementType ?? ''}`);
-        /* Update the version in the package.json for the package being published */
-        if (packageJson.version !== nextVersion.version) {
-            packageJson.version = nextVersion.version;
-            if (inputs.dryRun) {
-                core.info(`DRY RUN: Updating package json with next version: "${packagePath}"`);
-            }
-            else {
-                core.debug(`Updating package json with next version: "${packagePath}"`);
-                writePackageJson(packagePath, packageJson);
-            }
-        }
-        /* Publish the package to the registry */
-        await publishPackage(scriptsPackagePath, packagePath, packageJson, inputs.private, inputs.dryRun);
-        /* Cleanup the changes made to the git workspace */
-        if (!inputs.dryRun) {
-            await git.restore();
-        }
-        const newTag = `v${nextVersion.version}${inputs.gitTagSuffix}`;
-        /* Apply the git tags */
-        if (inputs.enableGitTagging) {
-            const newTagMinor = `v${nextVersion.major}.${nextVersion.minor}${inputs.gitTagSuffix}`;
-            const newTagMajor = `v${nextVersion.major}${inputs.gitTagSuffix}`;
-            const tags = [inputs.latestTagName, newTag, newTagMinor, newTagMajor];
-            if (inputs.dryRun) {
-                core.info(`DRY RUN: Git tags to be added/updated: ${JSON.stringify(tags)}`);
-            }
-            else {
-                core.debug(`Git tags to be added/updated: ${JSON.stringify(tags)}`);
-                await git.addTags(tags);
-                await git.pushTags();
-            }
-        }
-        /* Create release notes and GitHub Release */
-        core.info('Creating GitHub Release');
-        const getReleaseTitle = async () => {
-            if (inputs.releaseTitle) {
-                return inputs.releaseTitle;
-            }
-            if (inputs.getReleaseTitleFromPr) {
-                const response = await octokit.rest.repos.listPullRequestsAssociatedWithCommit({
-                    ...github.context.repo,
-                    commit_sha: github.context.sha,
-                });
-                const releaseTitle = response.data[0]?.title;
-                if (!releaseTitle) {
-                    return newTag;
-                }
-                return inputs.prependVersionToReleaseTitle ? `${newTag} - ${releaseTitle}` : releaseTitle;
-            }
-            return newTag;
-        };
-        const releaseDetails = {
-            ...github.context.repo,
-            tag_name: newTag,
-            name: await getReleaseTitle(),
-            body: buildChangelog(gitHistory, github.context.repo, inputs.changelogTitles, inputs.majorTypes),
-            prerelease: false,
-            draft: false,
-        };
-        core.debug(`GitHub Release Details: ${JSON.stringify(releaseDetails)}`);
-        await octokit.rest.repos.createRelease(releaseDetails);
-        /* Set the action outputs */
-        core.setOutput('current-version', currentVersion.version);
-        core.setOutput('increment-type', incrementType ?? '');
-        core.setOutput('next-version', nextVersion.version);
-        core.setOutput('next-version-major', nextVersion.major);
-        core.setOutput('next-version-minor', nextVersion.minor);
-        core.setOutput('next-version-patch', nextVersion.patch);
+        const data = registryMetadataSchema.parse(await response.json());
+        return data.versions[data['dist-tags'].latest];
     }
-    catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
-        core.setFailed(message);
+    async useLatestEndpoint(registryUrl, packageName, registryToken) {
+        try {
+            const url = new URL(`${encodeURIComponent(packageName)}/latest`, registryUrl);
+            const headers = {};
+            if (registryToken) {
+                headers.Authorization = `Bearer ${registryToken}`;
+            }
+            const response = await fetch(url, { headers });
+            if (response.ok) {
+                return registryMetadataForVersionSchema.parse(await response.json());
+            }
+        }
+        catch {
+            return undefined;
+        }
     }
 }
 
 ;// CONCATENATED MODULE: ./src/index.ts
 
-void run();
+
+
+
+
+
+
+const logger = core;
+const workflow = core;
+const git = new GitService(logger);
+const files = new FilesService();
+const registry = new PackageRegistryService(logger, files, exec.exec);
+void run(logger, workflow, github, git, files, registry);
 
 
 //# sourceMappingURL=index.js.map

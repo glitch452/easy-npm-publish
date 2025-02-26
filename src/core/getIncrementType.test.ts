@@ -10,12 +10,12 @@ describe(getIncrementType.name, () => {
 
   it('should return a "major" change when a commit body contains "BREAKING CHANGE" and a commit contains a minor type', () => {
     const actual = getIncrementType([docs, fix, feat, { ...feat, body: 'BREAKING CHANGE: Thing' }], [], ['feat']);
-    expect(actual).toStrictEqual('major');
+    expect(actual).toBe('major');
   });
 
   it('should return a "major" change when a commit body contains "BREAKING-CHANGE" and a commit contains a minor type', () => {
     const actual = getIncrementType([docs, fix, feat, { ...feat, body: 'BREAKING-CHANGE: Thing' }], [], ['feat']);
-    expect(actual).toStrictEqual('major');
+    expect(actual).toBe('major');
   });
 
   it('should return a "major" change when a commit message has a major type and a commit contains a minor type', () => {
@@ -24,21 +24,21 @@ describe(getIncrementType.name, () => {
       ['major'],
       ['feat'],
     );
-    expect(actual).toStrictEqual('major');
+    expect(actual).toBe('major');
   });
 
   it('should return a "major" change when a commit message has a "!:" and a commit contains a minor type', () => {
     const actual = getIncrementType([docs, fix, feat, { message: 'major!: Thing', body: '', hash }], [], ['feat']);
-    expect(actual).toStrictEqual('major');
+    expect(actual).toBe('major');
   });
 
   it('should return a "patch" change when none of the commit messages contain a major or minor type', () => {
     const actual = getIncrementType([docs, fix], ['major'], ['feat']);
-    expect(actual).toStrictEqual('patch');
+    expect(actual).toBe('patch');
   });
 
   it('should return a "minor" change when one of the commit messages contains minor type', () => {
     const actual = getIncrementType([docs, fix, feat], ['major'], ['feat']);
-    expect(actual).toStrictEqual('minor');
+    expect(actual).toBe('minor');
   });
 });

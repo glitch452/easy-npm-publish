@@ -53,11 +53,11 @@ export function buildChangelog(
   const breakingChanges = changesByType.get('breaking');
   if (breakingChanges) {
     changesByType.delete('breaking');
-    outputLines.push(`## ${typeTitles.breaking ? typeTitles.breaking : 'BREAKING CHANGES'}`, ...breakingChanges, '');
+    outputLines.push(`## ${typeTitles.breaking || 'BREAKING CHANGES'}`, ...breakingChanges, '');
   }
 
   for (const [type, lines] of changesByType) {
-    outputLines.push(`## ${typeTitles[type] ? typeTitles[type] : type}`, ...lines, '');
+    outputLines.push(`## ${typeTitles[type] || type}`, ...lines, '');
   }
 
   return outputLines.join('\n');

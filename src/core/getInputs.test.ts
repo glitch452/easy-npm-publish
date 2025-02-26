@@ -1,372 +1,369 @@
-import path from 'path';
-import fs from 'fs';
+import fs from 'node:fs';
+import path from 'node:path';
 import yaml from 'yaml';
-import { Getters, InputOptions, getInputs } from './getInputs.js';
 import { DEFAULT_TYPE_TITLES } from './constants.js';
+import { getInputs } from './getInputs.js';
+import { WorkflowMock } from '__mocks__/WorkflowMock.js';
 
 describe(getInputs.name, () => {
-  let lookup: Record<string, string>;
-
-  const requestedInputs = new Set<string>();
-  const getters: Getters = {
-    getInput(name: string, options?: InputOptions) {
-      const value = lookup[name] ?? '';
-      requestedInputs.add(name);
-      if (options?.required && !value) {
-        throw new Error(`Value Required for ${name}`);
-      }
-      return value;
-    },
-    getBooleanInput(name: string, options?: InputOptions) {
-      return ['true', 'True', 'TRUE'].includes(this.getInput(name, options));
-    },
-    getMultilineInput(name: string, options?: InputOptions) {
-      return this.getInput(name, options).split(/\r?\n/);
-    },
-  };
+  const workflowMock = new WorkflowMock();
 
   beforeEach(() => {
-    lookup = { 'registry-token': '<registryToken>', 'github-token': '<githubToken>' };
+    workflowMock.reset(true);
   });
 
-  describe('action.yaml', () => {
-    it('Should contain exactly the inputs that are requested in the action', () => {
-      const actionFilePath = path.join(import.meta.dirname, '..', '..', 'action.yml');
-      const actionFile = yaml.parse(fs.readFileSync(actionFilePath).toString());
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
 
-      getInputs(getters);
+  describe('action.yml', () => {
+    const actionFilePath = path.join(import.meta.dirname, '..', '..', 'action.yml');
+    const actionFile = yaml.parse(fs.readFileSync(actionFilePath).toString());
+
+    it('should request all and only the inputs that are listed in the action', () => {
+      getInputs(workflowMock);
 
       const actual = Object.keys(actionFile.inputs).sort();
-      const expected = [...requestedInputs].sort();
+      const expected = [...workflowMock.requestedInputs].sort();
       expect(actual).toStrictEqual(expected);
+    });
+
+    const requiredInputNames = Object.entries<any>(actionFile.inputs)
+      .filter(([, { required }]) => required)
+      .map(([x]) => x);
+
+    it.each(requiredInputNames)('Should throw an error if the required field "%s" is not provided', (inputName) => {
+      // This ensures that all inputs marked 'required' in the yaml file also have the required flag set on the input options
+      workflowMock.clearInputValue(inputName);
+      const actual = () => getInputs(workflowMock);
+      expect(actual).toThrow(`Value Required for ${inputName}`);
     });
   });
 
   describe('changelog-titles', () => {
-    it('Should return the defaults for "changelog-titles" if a value is not provided', () => {
-      lookup['changelog-titles'] = '';
-      const actual = getInputs(getters).changelogTitles;
+    it('should return the defaults for "changelog-titles" if a value is not provided', () => {
+      workflowMock.clearInputValue('changelog-titles');
+      const actual = getInputs(workflowMock).changelogTitles;
       expect(actual).toStrictEqual(DEFAULT_TYPE_TITLES);
     });
 
-    it('Should return the appended value for "changelog-titles" if it is set to a valid value', () => {
-      lookup['changelog-titles'] = '{ "feat": "Awesome Features!" }';
-      const actual = getInputs(getters).changelogTitles;
+    it('should return the appended value for "changelog-titles" if it is set to a valid value', () => {
+      workflowMock.setInputValue('changelog-titles', '{ "feat": "Awesome Features!" }');
+      const actual = getInputs(workflowMock).changelogTitles;
       const expected = { ...DEFAULT_TYPE_TITLES, feat: 'Awesome Features!' };
       expect(actual).toStrictEqual(expected);
     });
 
-    it('Should throw an error if the value is not valid json', () => {
-      lookup['changelog-titles'] = 'feat = Awesome Features!';
-      const actual = () => getInputs(getters).changelogTitles;
+    it('should throw an error if the value is not valid json', () => {
+      workflowMock.setInputValue('changelog-titles', 'feat = Awesome Features!');
+      const actual = () => getInputs(workflowMock).changelogTitles;
       expect(actual).toThrow();
     });
 
-    it('Should throw an error if the value is valid json but does not conform to the schema', () => {
-      lookup['changelog-titles'] = '{ "feat": [ "Awesome Features!" ] }';
-      const actual = () => getInputs(getters).changelogTitles;
+    it('should throw an error if the value is valid json but does not conform to the schema', () => {
+      workflowMock.setInputValue('changelog-titles', '{ "feat": [ "Awesome Features!" ] }');
+      const actual = () => getInputs(workflowMock).changelogTitles;
       expect(actual).toThrow();
     });
   });
 
   describe('dry-run', () => {
-    it('Should return false for "dry-run" if a value is not provided', () => {
-      lookup['dry-run'] = '';
-      const actual = getInputs(getters).dryRun;
-      expect(actual).toStrictEqual(false);
+    it('should return false for "dry-run" if a value is not provided', () => {
+      workflowMock.clearInputValue('dry-run');
+      const actual = getInputs(workflowMock).dryRun;
+      expect(actual).toBe(false);
     });
 
-    it('Should return true for "dry-run" if it is set to a true value', () => {
-      lookup['dry-run'] = 'true';
-      const actual = getInputs(getters).dryRun;
-      expect(actual).toStrictEqual(true);
+    it('should return true for "dry-run" if it is set to a true value', () => {
+      workflowMock.setInputValue('dry-run', 'true');
+      const actual = getInputs(workflowMock).dryRun;
+      expect(actual).toBe(true);
     });
   });
 
   describe('enableGithubRelease', () => {
-    it('Should return true for enableGithubRelease when "enable-github-release" is true', () => {
-      lookup['enable-github-release'] = 'true';
-      const actual = getInputs(getters).enableGithubRelease;
-      expect(actual).toStrictEqual(true);
+    it('should return true for enableGithubRelease when "enable-github-release" is true', () => {
+      workflowMock.setInputValue('enable-github-release', 'true');
+      const actual = getInputs(workflowMock).enableGithubRelease;
+      expect(actual).toBe(true);
     });
 
-    it('Should return false for enableGithubRelease when "enable-github-release" is false', () => {
-      lookup['enable-github-release'] = 'false';
-      const actual = getInputs(getters).enableGithubRelease;
-      expect(actual).toStrictEqual(false);
+    it('should return false for enableGithubRelease when "enable-github-release" is false', () => {
+      workflowMock.setInputValue('enable-github-release', 'false');
+      const actual = getInputs(workflowMock).enableGithubRelease;
+      expect(actual).toBe(false);
     });
 
-    it('Should return false for enableGithubRelease when "enable-github-release" is not provided', () => {
-      lookup['enable-github-release'] = '';
-      const actual = getInputs(getters).enableGithubRelease;
-      expect(actual).toStrictEqual(false);
+    it('should return false for enableGithubRelease when "enable-github-release" is not provided', () => {
+      workflowMock.clearInputValue('enable-github-release');
+      const actual = getInputs(workflowMock).enableGithubRelease;
+      expect(actual).toBe(false);
     });
   });
 
   describe('get-release-title-from-pr', () => {
-    it('Should return false for "get-release-title-from-pr" if a value is not provided', () => {
-      lookup['get-release-title-from-pr'] = '';
-      const actual = getInputs(getters).getReleaseTitleFromPr;
-      expect(actual).toStrictEqual(false);
+    it('should return false for "get-release-title-from-pr" if a value is not provided', () => {
+      workflowMock.clearInputValue('get-release-title-from-pr');
+      const actual = getInputs(workflowMock).getReleaseTitleFromPr;
+      expect(actual).toBe(false);
     });
 
-    it('Should return true for "get-release-title-from-pr" if it is set to a true value', () => {
-      lookup['get-release-title-from-pr'] = 'true';
-      const actual = getInputs(getters).getReleaseTitleFromPr;
-      expect(actual).toStrictEqual(true);
+    it('should return true for "get-release-title-from-pr" if it is set to a true value', () => {
+      workflowMock.setInputValue('get-release-title-from-pr', 'true');
+      const actual = getInputs(workflowMock).getReleaseTitleFromPr;
+      expect(actual).toBe(true);
     });
   });
 
   describe('enableGitTagging', () => {
-    it('Should return false for enableGitTagging when "disable-git-tagging" is true', () => {
-      lookup['disable-git-tagging'] = 'true';
-      const actual = getInputs(getters).enableGitTagging;
-      expect(actual).toStrictEqual(false);
+    it('should return false for enableGitTagging when "disable-git-tagging" is true', () => {
+      workflowMock.setInputValue('disable-git-tagging', 'true');
+      const actual = getInputs(workflowMock).enableGitTagging;
+      expect(actual).toBe(false);
     });
 
-    it('Should return true for enableGitTagging when "disable-git-tagging" is false', () => {
-      lookup['disable-git-tagging'] = 'false';
-      const actual = getInputs(getters).enableGitTagging;
-      expect(actual).toStrictEqual(true);
+    it('should return true for enableGitTagging when "disable-git-tagging" is false', () => {
+      workflowMock.setInputValue('disable-git-tagging', 'false');
+      const actual = getInputs(workflowMock).enableGitTagging;
+      expect(actual).toBe(true);
     });
 
-    it('Should return true for enableGitTagging when "disable-git-tagging" is not provided', () => {
-      lookup['disable-git-tagging'] = '';
-      const actual = getInputs(getters).enableGitTagging;
-      expect(actual).toStrictEqual(true);
+    it('should return true for enableGitTagging when "disable-git-tagging" is not provided', () => {
+      workflowMock.clearInputValue('disable-git-tagging');
+      const actual = getInputs(workflowMock).enableGitTagging;
+      expect(actual).toBe(true);
     });
   });
 
   describe('githubToken', () => {
-    it('Should throw an error if "disable-git-tagging" is false and the "github-token" is not provided', () => {
-      lookup['disable-git-tagging'] = 'false';
-      lookup['github-token'] = '';
-      const actual = () => getInputs(getters);
+    it('should throw an error if "disable-git-tagging" is false and the "github-token" is not provided', () => {
+      workflowMock.setInputValue('disable-git-tagging', 'false');
+      workflowMock.clearInputValue('github-token');
+      const actual = () => getInputs(workflowMock);
       expect(actual).toThrow('github-token');
     });
 
-    it('Should return the provided "github-token"', () => {
-      lookup['github-token'] = '<githubToken>';
-      const actual = getInputs(getters).githubToken;
-      expect(actual).toStrictEqual('<githubToken>');
+    it('should return the provided "github-token"', () => {
+      workflowMock.setInputValue('github-token', '<githubToken>');
+      const actual = getInputs(workflowMock).githubToken;
+      expect(actual).toBe('<githubToken>');
     });
   });
 
   describe('gitTagSuffix', () => {
-    it('Should return the provided "git-tag-suffix"', () => {
-      lookup['git-tag-suffix'] = '<gitTagSuffix>';
-      const actual = getInputs(getters).gitTagSuffix;
-      expect(actual).toStrictEqual('<gitTagSuffix>');
+    it('should return the provided "git-tag-suffix"', () => {
+      workflowMock.setInputValue('git-tag-suffix', '<gitTagSuffix>');
+      const actual = getInputs(workflowMock).gitTagSuffix;
+      expect(actual).toBe('<gitTagSuffix>');
     });
   });
 
   describe('latestTagName', () => {
-    it('Should return the default "latest-tag-name" if it is not provided', () => {
-      lookup['latest-tag-name'] = '';
-      const actual = getInputs(getters).latestTagName;
-      expect(actual).toStrictEqual('latest');
+    it('should return the default "latest-tag-name" if it is not provided', () => {
+      workflowMock.clearInputValue('latest-tag-name');
+      const actual = getInputs(workflowMock).latestTagName;
+      expect(actual).toBe('latest');
     });
 
-    it('Should return the provided "latest-tag-name"', () => {
-      lookup['latest-tag-name'] = '<latestTagName>';
-      const actual = getInputs(getters).latestTagName;
-      expect(actual).toStrictEqual('<latestTagName>');
+    it('should return the provided "latest-tag-name"', () => {
+      workflowMock.setInputValue('latest-tag-name', '<latestTagName>');
+      const actual = getInputs(workflowMock).latestTagName;
+      expect(actual).toBe('<latestTagName>');
     });
   });
 
   describe('majorTypes', () => {
-    it('Should return an empty list of no major types are provided', () => {
-      lookup['major-types'] = '';
-      const actual = getInputs(getters).majorTypes;
+    it('should return an empty list of no major types are provided', () => {
+      workflowMock.clearInputValue('major-types');
+      const actual = getInputs(workflowMock).majorTypes;
       expect(actual).toStrictEqual([]);
     });
 
-    it('Should return the provided "major-types"', () => {
-      lookup['major-types'] = '<major1>,<major2>';
-      const actual = getInputs(getters).majorTypes;
+    it('should return the provided "major-types"', () => {
+      workflowMock.setInputValue('major-types', '<major1>,<major2>');
+      const actual = getInputs(workflowMock).majorTypes;
       expect(actual).toStrictEqual(['<major1>', '<major2>']);
     });
   });
 
   describe('minorTypes', () => {
-    it('Should return the default "minor-types" if it is not provided', () => {
-      lookup['minor-types'] = '';
-      const actual = getInputs(getters).minorTypes;
+    it('should return the default "minor-types" if it is not provided', () => {
+      workflowMock.clearInputValue('minor-types');
+      const actual = getInputs(workflowMock).minorTypes;
       expect(actual).toStrictEqual(['feat']);
     });
 
-    it('Should return the provided "minor-types"', () => {
-      lookup['minor-types'] = '<minor1>,<minor2>';
-      const actual = getInputs(getters).minorTypes;
+    it('should return the provided "minor-types"', () => {
+      workflowMock.setInputValue('minor-types', '<minor1>,<minor2>');
+      const actual = getInputs(workflowMock).minorTypes;
       expect(actual).toStrictEqual(['<minor1>', '<minor2>']);
     });
   });
 
   describe('npmrcContent', () => {
-    it('Should return the provided "npmrc-content"', () => {
-      lookup['npmrc-content'] = '<npmrcContent>\nLine2';
-      const actual = getInputs(getters).npmrcContent;
-      expect(actual).toStrictEqual('<npmrcContent>\nLine2');
+    it('should return the provided "npmrc-content"', () => {
+      workflowMock.setInputValue('npmrc-content', '<npmrcContent>\nLine2');
+      const actual = getInputs(workflowMock).npmrcContent;
+      expect(actual).toBe('<npmrcContent>\nLine2');
     });
   });
 
   describe('npmrcPath', () => {
-    it('Should return the default "npmrc-path" if it is not provided', () => {
-      lookup['npmrc-path'] = '';
+    it('should return the default "npmrc-path" if it is not provided', () => {
+      workflowMock.clearInputValue('npmrc-path');
       vi.stubEnv('HOME', '<home>');
-      const actual = getInputs(getters).npmrcPath;
+      const actual = getInputs(workflowMock).npmrcPath;
       expect(actual).toStrictEqual(path.join('<home>', '.npmrc'));
       vi.unstubAllEnvs();
     });
 
-    it('Should return the default "npmrc-path" if it is not provided and HOME is not set', () => {
-      lookup['npmrc-path'] = '';
-      const old = process.env.HOME;
-      delete process.env.HOME;
-      const actual = getInputs(getters).npmrcPath;
-      expect(actual).toStrictEqual('.npmrc');
-      process.env.HOME = old;
+    it('should return the default "npmrc-path" if it is not provided and HOME is not set', () => {
+      workflowMock.clearInputValue('npmrc-path');
+      // eslint-disable-next-line unicorn/no-useless-undefined -- Typedef for stubEnv requires a value
+      vi.stubEnv('HOME', undefined);
+      const actual = getInputs(workflowMock).npmrcPath;
+      expect(actual).toBe('.npmrc');
     });
 
-    it('Should return the provided "npmrc-path"', () => {
-      lookup['npmrc-path'] = '<npmrcPath>';
-      const actual = getInputs(getters).npmrcPath;
-      expect(actual).toStrictEqual('<npmrcPath>');
+    it('should return the provided "npmrc-path"', () => {
+      workflowMock.setInputValue('npmrc-path', '<npmrcPath>');
+      const actual = getInputs(workflowMock).npmrcPath;
+      expect(actual).toBe('<npmrcPath>');
     });
   });
 
   describe('packageDirectory', () => {
-    it('Should return the default "package-directory" if it is not provided', () => {
-      lookup['package-directory'] = '';
-      const actual = getInputs(getters).packageDirectory;
-      expect(actual).toStrictEqual('.');
+    it('should return the default "package-directory" if it is not provided', () => {
+      workflowMock.clearInputValue('package-directory');
+      const actual = getInputs(workflowMock).packageDirectory;
+      expect(actual).toBe('.');
     });
 
-    it('Should return the provided "package-directory"', () => {
-      lookup['package-directory'] = '<packageDirectory>';
-      const actual = getInputs(getters).packageDirectory;
-      expect(actual).toStrictEqual('<packageDirectory>');
+    it('should return the provided "package-directory"', () => {
+      workflowMock.setInputValue('package-directory', '<packageDirectory>');
+      const actual = getInputs(workflowMock).packageDirectory;
+      expect(actual).toBe('<packageDirectory>');
     });
   });
 
   describe('prepend-version-to-release-title', () => {
-    it('Should return false for "prepend-version-to-release-title" if a value is not provided', () => {
-      lookup['prepend-version-to-release-title'] = '';
-      const actual = getInputs(getters).prependVersionToReleaseTitle;
-      expect(actual).toStrictEqual(false);
+    it('should return false for "prepend-version-to-release-title" if a value is not provided', () => {
+      workflowMock.clearInputValue('prepend-version-to-release-title');
+      const actual = getInputs(workflowMock).prependVersionToReleaseTitle;
+      expect(actual).toBe(false);
     });
 
-    it('Should return true for "prepend-version-to-release-title" if it is set to a true value', () => {
-      lookup['prepend-version-to-release-title'] = 'true';
-      const actual = getInputs(getters).prependVersionToReleaseTitle;
-      expect(actual).toStrictEqual(true);
+    it('should return true for "prepend-version-to-release-title" if it is set to a true value', () => {
+      workflowMock.setInputValue('prepend-version-to-release-title', 'true');
+      const actual = getInputs(workflowMock).prependVersionToReleaseTitle;
+      expect(actual).toBe(true);
     });
   });
 
   describe('scriptsPackageDirectory', () => {
-    it('Should return the default "scripts-package-directory" if it and the "package-directory" are not provided', () => {
-      lookup['package-directory'] = '';
-      lookup['scripts-package-directory'] = '';
-      const actual = getInputs(getters).scriptsPackageDirectory;
-      expect(actual).toStrictEqual('.');
+    it('should return the default "scripts-package-directory" if it and the "package-directory" are not provided', () => {
+      workflowMock.clearInputValue('package-directory');
+      workflowMock.clearInputValue('scripts-package-directory');
+      const actual = getInputs(workflowMock).scriptsPackageDirectory;
+      expect(actual).toBe('.');
     });
 
-    it('Should return the "package-directory" value if one is provided and the "scripts-package-directory" is not provided', () => {
-      lookup['package-directory'] = '<packageDirectory>';
-      lookup['scripts-package-directory'] = '';
-      const actual = getInputs(getters).scriptsPackageDirectory;
-      expect(actual).toStrictEqual('<packageDirectory>');
+    it('should return the "package-directory" value if one is provided and the "scripts-package-directory" is not provided', () => {
+      workflowMock.setInputValue('package-directory', '<packageDirectory>');
+      workflowMock.clearInputValue('scripts-package-directory');
+      const actual = getInputs(workflowMock).scriptsPackageDirectory;
+      expect(actual).toBe('<packageDirectory>');
     });
 
-    it('Should return the provided "scripts-package-directory"', () => {
-      lookup['scripts-package-directory'] = '<scriptsPackageDirectory>';
-      const actual = getInputs(getters).scriptsPackageDirectory;
-      expect(actual).toStrictEqual('<scriptsPackageDirectory>');
+    it('should return the provided "scripts-package-directory"', () => {
+      workflowMock.setInputValue('scripts-package-directory', '<scriptsPackageDirectory>');
+      const actual = getInputs(workflowMock).scriptsPackageDirectory;
+      expect(actual).toBe('<scriptsPackageDirectory>');
     });
   });
 
   describe('private', () => {
-    it('Should return false for "private" if a value is not provided', () => {
-      lookup.private = '';
-      const actual = getInputs(getters).private;
-      expect(actual).toStrictEqual(false);
+    it('should return false for "private" if a value is not provided', () => {
+      workflowMock.clearInputValue('private');
+      const actual = getInputs(workflowMock).private;
+      expect(actual).toBe(false);
     });
 
-    it('Should return true for "private" if it is set to a true value', () => {
-      lookup.private = 'true';
-      const actual = getInputs(getters).private;
-      expect(actual).toStrictEqual(true);
+    it('should return true for "private" if it is set to a true value', () => {
+      workflowMock.setInputValue('private', 'true');
+      const actual = getInputs(workflowMock).private;
+      expect(actual).toBe(true);
     });
   });
 
   describe('registryToken', () => {
-    it('Should throw an error if the "registry-token" is not provided', () => {
-      lookup['registry-token'] = '';
-      const actual = () => getInputs(getters);
+    it('should throw an error if the "registry-token" is not provided', () => {
+      workflowMock.clearInputValue('registry-token');
+      const actual = () => getInputs(workflowMock);
       expect(actual).toThrow('registry-token');
     });
 
-    it('Should return the registry token', () => {
-      lookup['registry-token'] = '<registryToken>';
-      const actual = getInputs(getters).registryToken;
-      expect(actual).toStrictEqual('<registryToken>');
+    it('should return the registry token', () => {
+      workflowMock.setInputValue('registry-token', '<registryToken>');
+      const actual = getInputs(workflowMock).registryToken;
+      expect(actual).toBe('<registryToken>');
     });
   });
 
   describe('registryUrl', () => {
-    it('Should return the default registry url if a value is not provided', () => {
-      const actual = getInputs(getters).registryUrl.href;
-      expect(actual).toStrictEqual('https://registry.npmjs.org/');
+    it('should return the default registry url if a value is not provided', () => {
+      const actual = getInputs(workflowMock).registryUrl.href;
+      expect(actual).toBe('https://registry.npmjs.org/');
     });
 
-    it('Should return the registry url', () => {
-      lookup['registry-url'] = 'https://registry-url.com';
-      const actual = getInputs(getters).registryUrl.href;
-      expect(actual).toStrictEqual('https://registry-url.com/');
+    it('should return the registry url', () => {
+      workflowMock.setInputValue('registry-url', 'https://registry-url.com');
+      const actual = getInputs(workflowMock).registryUrl.href;
+      expect(actual).toBe('https://registry-url.com/');
     });
 
-    it('Should return the registry url using https if no protocol is provided', () => {
-      lookup['registry-url'] = 'registry-url.com';
-      const actual = getInputs(getters).registryUrl.href;
-      expect(actual).toStrictEqual('https://registry-url.com/');
+    it('should return the registry url using https if no protocol is provided', () => {
+      workflowMock.setInputValue('registry-url', 'registry-url.com');
+      const actual = getInputs(workflowMock).registryUrl.href;
+      expect(actual).toBe('https://registry-url.com/');
     });
 
-    it('Should return the registry url using http if the http protocol is provided', () => {
-      lookup['registry-url'] = 'http://registry-url.com';
-      const actual = getInputs(getters).registryUrl.href;
-      expect(actual).toStrictEqual('http://registry-url.com/');
+    it('should return the registry url using http if the http protocol is provided', () => {
+      workflowMock.setInputValue('registry-url', 'http://registry-url.com');
+      const actual = getInputs(workflowMock).registryUrl.href;
+      expect(actual).toBe('http://registry-url.com/');
     });
   });
 
   describe('releaseTitle', () => {
-    it('Should return an empty string if a value is not provided', () => {
-      const actual = getInputs(getters).releaseTitle;
-      expect(actual).toStrictEqual('');
+    it('should return an empty string if a value is not provided', () => {
+      const actual = getInputs(workflowMock).releaseTitle;
+      expect(actual).toBe('');
     });
 
-    it('Should return the provided "release-title"', () => {
-      lookup['release-title'] = '<releaseTitle>';
-      const actual = getInputs(getters).releaseTitle;
-      expect(actual).toStrictEqual('<releaseTitle>');
+    it('should return the provided "release-title"', () => {
+      workflowMock.setInputValue('release-title', '<releaseTitle>');
+      const actual = getInputs(workflowMock).releaseTitle;
+      expect(actual).toBe('<releaseTitle>');
     });
   });
 
   describe('versionOverride', () => {
-    it('Should return null if no "version-override" is provided', () => {
-      lookup['version-override'] = '';
-      const actual = getInputs(getters).versionOverride;
-      expect(actual).toStrictEqual(null);
+    it('should return undefined if no "version-override" is provided', () => {
+      workflowMock.clearInputValue('version-override');
+      const actual = getInputs(workflowMock).versionOverride;
+      expect(actual).toBeUndefined();
     });
 
-    it('Should return the provided "version-override"', () => {
-      lookup['version-override'] = '0.1.2';
-      const actual = getInputs(getters).versionOverride?.version;
-      expect(actual).toStrictEqual('0.1.2');
+    it('should return the provided "version-override"', () => {
+      workflowMock.setInputValue('version-override', '0.1.2');
+      const actual = getInputs(workflowMock).versionOverride?.version;
+      expect(actual).toBe('0.1.2');
     });
 
-    it('Should throw an error if the "version-override" is not a valid semver value', () => {
-      lookup['version-override'] = '<version-override>';
-      const actual = () => getInputs(getters).versionOverride;
+    it('should throw an error if the "version-override" is not a valid semver value', () => {
+      workflowMock.setInputValue('version-override', '<version-override>');
+      const actual = () => getInputs(workflowMock).versionOverride;
       expect(actual).toThrow('valid semver');
     });
   });
