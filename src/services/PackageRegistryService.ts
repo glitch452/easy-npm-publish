@@ -113,7 +113,7 @@ export class PackageRegistryService implements PackageRegistry {
       if (response.ok) {
         return registryMetadataForVersionSchema.parse(await response.json());
       }
-    } catch (e: unknown) {
+    } catch {
       return undefined;
     }
   }

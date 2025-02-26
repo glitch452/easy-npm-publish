@@ -78,6 +78,7 @@ describe(run.name, () => {
   });
 
   it('should fail with an Error if the "GITHUB_WORKSPACE" env var is not set', async () => {
+    // eslint-disable-next-line unicorn/no-useless-undefined -- Typedef for stubEnv requires a value
     vi.stubEnv('GITHUB_WORKSPACE', undefined);
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
     const expected = new Error(
@@ -101,12 +102,14 @@ describe(run.name, () => {
   });
 
   it('should use the current version from the package.json file if there is no version published to the registry', async () => {
+    // eslint-disable-next-line unicorn/no-useless-undefined -- Typedef requires a value
     getLatestPackageDetailsSpy.mockResolvedValue(undefined);
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
     expect(setOutputSpy).toHaveBeenCalledWith('current-version', packageJson.version);
   });
 
   it('should use the current version as "0.0.0" if there is no version published to the registry and the package.json version is invalid', async () => {
+    // eslint-disable-next-line unicorn/no-useless-undefined -- Typedef requires a value
     getLatestPackageDetailsSpy.mockResolvedValue(undefined);
     fs.writeFileSync(path.join(repoDir, 'package.json'), JSON.stringify({ name: 'name', version: 'invalid-version' }));
     await run(loggerMock, workflow, gitHubMock, git, files, registry);

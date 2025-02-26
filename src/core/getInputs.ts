@@ -11,7 +11,7 @@ export function getInputs(getters: Pick<Workflow, 'getBooleanInput' | 'getInput'
     registryUrl: getters.getInput('registry-url') || 'registry.npmjs.org',
   };
 
-  const versionOverride = originals.versionOverride ? semver.parse(originals.versionOverride) : null;
+  const versionOverride = originals.versionOverride ? semver.parse(originals.versionOverride) : undefined;
   if (originals.versionOverride && !versionOverride) {
     throw new Error(`The version override "${originals.versionOverride}" is not a valid semver string.`);
   }

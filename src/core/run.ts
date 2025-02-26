@@ -185,7 +185,7 @@ export async function run(
     workflow.setOutput('next-version-major', nextVersion.major);
     workflow.setOutput('next-version-minor', nextVersion.minor);
     workflow.setOutput('next-version-patch', nextVersion.patch);
-  } catch (e: unknown) {
-    workflow.setFailed(e instanceof Error ? e : String(e));
+  } catch (error: unknown) {
+    workflow.setFailed(error instanceof Error ? error : String(error));
   }
 }

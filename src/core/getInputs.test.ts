@@ -219,6 +219,7 @@ describe(getInputs.name, () => {
 
     it('should return the default "npmrc-path" if it is not provided and HOME is not set', () => {
       workflowMock.clearInputValue('npmrc-path');
+      // eslint-disable-next-line unicorn/no-useless-undefined -- Typedef for stubEnv requires a value
       vi.stubEnv('HOME', undefined);
       const actual = getInputs(workflowMock).npmrcPath;
       expect(actual).toBe('.npmrc');
@@ -348,10 +349,10 @@ describe(getInputs.name, () => {
   });
 
   describe('versionOverride', () => {
-    it('should return null if no "version-override" is provided', () => {
+    it('should return undefined if no "version-override" is provided', () => {
       workflowMock.clearInputValue('version-override');
       const actual = getInputs(workflowMock).versionOverride;
-      expect(actual).toBeNull();
+      expect(actual).toBeUndefined();
     });
 
     it('should return the provided "version-override"', () => {
