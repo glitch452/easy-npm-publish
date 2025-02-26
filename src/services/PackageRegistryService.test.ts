@@ -98,7 +98,7 @@ describe(PackageRegistryService.name, () => {
     const registryMeta = { name: '<name>', version: '<version>', gitHead: '<gitHead>' };
     const packageEndpoint = `${url.toString()}${encodeURIComponent(packageName)}`;
     const latestEndpoint = `${packageEndpoint}/latest`;
-    let authHeader: string | null;
+    let authHeader: string | undefined;
 
     afterEach(() => {
       server.resetHandlers();
@@ -126,13 +126,13 @@ describe(PackageRegistryService.name, () => {
       });
 
       it('should return the latest details found at the package endpoint when the "/latest" endpoint returns a 404 status code', async () => {
-        server.use(http.get(latestEndpoint, () => new HttpResponse(null, { status: 404 })));
+        server.use(http.get(latestEndpoint, () => new HttpResponse(undefined, { status: 404 })));
         const actual = await registryService.getLatestPackageDetails(url, packageName);
         expect(actual).toStrictEqual(registryMeta);
       });
 
       it('should return the latest details found at the package endpoint when the "/latest" endpoint returns a 500 status code', async () => {
-        server.use(http.get(latestEndpoint, () => new HttpResponse(null, { status: 500 })));
+        server.use(http.get(latestEndpoint, () => new HttpResponse(undefined, { status: 500 })));
         const actual = await registryService.getLatestPackageDetails(url, packageName);
         expect(actual).toStrictEqual(registryMeta);
       });
@@ -157,14 +157,14 @@ describe(PackageRegistryService.name, () => {
 
       it('should return undefined when the "/latest" endpoint fails and the package endpoint returns a 404 status code', async () => {
         server.use(http.get(latestEndpoint, () => HttpResponse.error()));
-        server.use(http.get(packageEndpoint, () => new HttpResponse(null, { status: 404 })));
+        server.use(http.get(packageEndpoint, () => new HttpResponse(undefined, { status: 404 })));
         const actual = await registryService.getLatestPackageDetails(url, packageName);
         expect(actual).toBeUndefined();
       });
 
       it('should throw when the "/latest" endpoint fails and the package endpoint returns a 500 status code', async () => {
         server.use(http.get(latestEndpoint, () => HttpResponse.error()));
-        server.use(http.get(packageEndpoint, () => new HttpResponse(null, { status: 500 })));
+        server.use(http.get(packageEndpoint, () => new HttpResponse(undefined, { status: 500 })));
         const actual = registryService.getLatestPackageDetails(url, packageName);
         await expect(actual).rejects.toThrow('Fetch request failed');
       });
@@ -185,7 +185,7 @@ describe(PackageRegistryService.name, () => {
 
       it('should throw when the "/latest" endpoint fails and the package endpoint returns invalid data', async () => {
         server.use(http.get(latestEndpoint, () => HttpResponse.error()));
-        server.use(http.get(packageEndpoint, () => HttpResponse.json({ 'dist-tags': null })));
+        server.use(http.get(packageEndpoint, () => HttpResponse.json({ 'dist-tags': false })));
         const actual = registryService.getLatestPackageDetails(url, packageName);
         await expect(actual).rejects.toThrow();
       });
@@ -207,7 +207,7 @@ describe(PackageRegistryService.name, () => {
         server.use(
           http.get(latestEndpoint, () => HttpResponse.error()),
           http.get(packageEndpoint, ({ request }) => {
-            authHeader = request.headers.get('Authorization');
+            authHeader = request.headers.get('Authorization') ?? undefined;
             return HttpResponse.json({
               'dist-tags': { latest: '0.0.0' },
               versions: { '0.0.0': registryMeta },
@@ -218,7 +218,7 @@ describe(PackageRegistryService.name, () => {
       });
 
       it('should include the bearer token in the request if the registryToken is provided', async () => {
-        authHeader = null;
+        authHeader = undefined;
         await registryService.getLatestPackageDetails(url, packageName, registryToken);
         const expected = `Bearer ${registryToken}`;
         expect(authHeader).toStrictEqual(expected);
@@ -227,7 +227,7 @@ describe(PackageRegistryService.name, () => {
       it('should not include the bearer token in the request if the registryToken is not provided', async () => {
         authHeader = '';
         await registryService.getLatestPackageDetails(url, packageName);
-        expect(authHeader).toBeNull();
+        expect(authHeader).toBeUndefined();
       });
     });
 
@@ -235,14 +235,14 @@ describe(PackageRegistryService.name, () => {
       beforeEach(() => {
         server.use(
           http.get(latestEndpoint, ({ request }) => {
-            authHeader = request.headers.get('Authorization');
+            authHeader = request.headers.get('Authorization') ?? undefined;
             return HttpResponse.json(registryMeta);
           }),
         );
       });
 
       it('should include the bearer token in the request if the registryToken is provided', async () => {
-        authHeader = null;
+        authHeader = undefined;
         await registryService.getLatestPackageDetails(url, packageName, registryToken);
         const expected = `Bearer ${registryToken}`;
         expect(authHeader).toStrictEqual(expected);
@@ -251,7 +251,7 @@ describe(PackageRegistryService.name, () => {
       it('should not include the bearer token in the request if the registryToken is not provided', async () => {
         authHeader = '';
         await registryService.getLatestPackageDetails(url, packageName);
-        expect(authHeader).toBeNull();
+        expect(authHeader).toBeUndefined();
       });
     });
   });
