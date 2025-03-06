@@ -40,7 +40,7 @@ describe(getInputs.name, () => {
     });
   });
 
-  describe('changelog-titles', () => {
+  describe('changelogTitles', () => {
     it('should return the defaults for "changelog-titles" if a value is not provided', () => {
       workflowMock.clearInputValue('changelog-titles');
       const actual = getInputs(workflowMock).changelogTitles;
@@ -67,7 +67,7 @@ describe(getInputs.name, () => {
     });
   });
 
-  describe('dry-run', () => {
+  describe('dryRun', () => {
     it('should return false for "dry-run" if a value is not provided', () => {
       workflowMock.clearInputValue('dry-run');
       const actual = getInputs(workflowMock).dryRun;
@@ -101,7 +101,7 @@ describe(getInputs.name, () => {
     });
   });
 
-  describe('get-release-title-from-pr', () => {
+  describe('getReleaseTitleFromPr', () => {
     it('should return false for "get-release-title-from-pr" if a value is not provided', () => {
       workflowMock.clearInputValue('get-release-title-from-pr');
       const actual = getInputs(workflowMock).getReleaseTitleFromPr;
@@ -246,7 +246,7 @@ describe(getInputs.name, () => {
     });
   });
 
-  describe('prepend-version-to-release-title', () => {
+  describe('prependVersionToReleaseTitle', () => {
     it('should return false for "prepend-version-to-release-title" if a value is not provided', () => {
       workflowMock.clearInputValue('prepend-version-to-release-title');
       const actual = getInputs(workflowMock).prependVersionToReleaseTitle;

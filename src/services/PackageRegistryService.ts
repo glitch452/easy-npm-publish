@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { ExecOptions } from '@actions/exec';
+import { type exec as ActionsExec } from '@actions/exec';
 import {
   PackageJsonSchema,
   RegistryMetadataForVersion,
@@ -16,7 +16,7 @@ export class PackageRegistryService implements PackageRegistry {
   constructor(
     private readonly logger: Logger,
     private readonly files: Pick<FilesService, 'readPackageJson'>,
-    private readonly exec: (commandLine: string, args?: string[], options?: ExecOptions) => Promise<number>,
+    private readonly exec: typeof ActionsExec,
   ) {}
 
   async publishPackage(

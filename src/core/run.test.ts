@@ -50,6 +50,8 @@ describe(run.name, () => {
   const getLatestPackageDetailsSpy = vi.spyOn(registry, 'getLatestPackageDetails');
   const publishPackageSpy = vi.spyOn(registry, 'publishPackage');
   const getHistorySpy = vi.spyOn(git, 'getHistory');
+  const addTagsSpy = vi.spyOn(git, 'addTags');
+  const pushTagsSpy = vi.spyOn(git, 'pushTags');
   const packageJson = { name: 'name', version: '0.1.0' };
   const registryDetails = { name: 'name', version: '1.0.0', gitHead: 'gitHead' };
 
@@ -407,38 +409,34 @@ describe(run.name, () => {
 
   it('should not add git tags when the "dry-run" input is set to true', async () => {
     workflow.setInputValue('dry-run', 'true');
-    const addTagsSpy = vi.spyOn(git, 'addTags');
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
     expect(addTagsSpy).not.toHaveBeenCalled();
   });
 
   it('should not push git tags when the "dry-run" input is set to true', async () => {
     workflow.setInputValue('dry-run', 'true');
-    const pushTagsSpy = vi.spyOn(git, 'pushTags');
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
     expect(pushTagsSpy).not.toHaveBeenCalled();
   });
 
   it('should not add git tags when the "disable-git-tagging" input is set to true', async () => {
     workflow.setInputValue('disable-git-tagging', 'true');
-    const addTagsSpy = vi.spyOn(git, 'addTags');
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
     expect(addTagsSpy).not.toHaveBeenCalled();
   });
 
   it('should not push git tags when the "disable-git-tagging" input is set to true', async () => {
     workflow.setInputValue('disable-git-tagging', 'true');
-    const pushTagsSpy = vi.spyOn(git, 'pushTags');
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
     expect(pushTagsSpy).not.toHaveBeenCalled();
   });
 
   it('should call addTags before pushTags when updating the tags', async () => {
     const calls: string[] = [];
-    vi.spyOn(git, 'addTags').mockImplementationOnce(() => {
+    addTagsSpy.mockImplementationOnce(() => {
       return Promise.resolve(calls.push('addTags')) as any;
     });
-    vi.spyOn(git, 'pushTags').mockImplementationOnce(() => {
+    pushTagsSpy.mockImplementationOnce(() => {
       return Promise.resolve(calls.push('pushTags')) as any;
     });
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
@@ -446,7 +444,6 @@ describe(run.name, () => {
   });
 
   it('should update the "latest" tag', async () => {
-    const addTagsSpy = vi.spyOn(git, 'addTags');
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
     const expected = expect.arrayContaining(['latest']);
     expect(addTagsSpy).toHaveBeenCalledExactlyOnceWith(expected);
@@ -454,14 +451,12 @@ describe(run.name, () => {
 
   it('should update the latest tag using the tag name provided by the "latest-tag-name" input', async () => {
     workflow.setInputValue('latest-tag-name', '<latestTagInput>');
-    const addTagsSpy = vi.spyOn(git, 'addTags');
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
     const expected = expect.arrayContaining(['<latestTagInput>']);
     expect(addTagsSpy).toHaveBeenCalledExactlyOnceWith(expected);
   });
 
   it('should update the version tags for the major, major with minor, and major with minor and patch versions', async () => {
-    const addTagsSpy = vi.spyOn(git, 'addTags');
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
     const expected = expect.arrayContaining(['v1', 'v1.0', 'v1.0.1']);
     expect(addTagsSpy).toHaveBeenCalledExactlyOnceWith(expected);
@@ -496,7 +491,6 @@ describe(run.name, () => {
 
   it('should append the value from the "git-tag-suffix" input to the git tags', async () => {
     workflow.setInputValue('git-tag-suffix', '<suffix>');
-    const addTagsSpy = vi.spyOn(git, 'addTags');
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
     const expected = expect.arrayContaining(['v1<suffix>', 'v1.0<suffix>', 'v1.0.1<suffix>']);
     expect(addTagsSpy).toHaveBeenCalledExactlyOnceWith(expected);

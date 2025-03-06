@@ -11,6 +11,7 @@ export default buildConfig(
   mdx,
   prettier,
   {
+    name: 'root/import-order',
     files: [files.jsTsNoX],
     rules: {
       'import/order': ['error', { alphabetize: { order: 'asc', caseInsensitive: true }, 'newlines-between': 'never' }],
