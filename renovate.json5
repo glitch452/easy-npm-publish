@@ -2,52 +2,16 @@
   // Docs: https://docs.renovatebot.com/configuration-options
 
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
-  extends: ['config:recommended'],
-
-  timezone: 'Canada/Pacific',
-  dependencyDashboard: false,
-  branchNameStrict: true,
-  separateMajorMinor: false,
-  configMigration: true,
-  prHourlyLimit: 10,
-
-  customManagers: [
-    {
-      description: 'Update node version in action.yml',
-      customType: 'regex',
-      fileMatch: ['^action\\.yml$'],
-      matchStrings: ['using: (?<depName>[a-z]+)(?<currentValue>[0-9]+)'],
-      autoReplaceStringTemplate: 'using: {{{depName}}}{{{newValue}}}',
-      datasourceTemplate: '{{{depName}}}',
-      versioningTemplate: '{{{depName}}}',
-    },
+  extends: [
+    'github>glitch452/renovate-config',
+    'github>glitch452/renovate-config//presets/github-action',
+    'github>glitch452/renovate-config//presets/npm',
   ],
 
+  // Run on Friday Mornings
+  schedule: ['* 0-6 * * 5'],
+
   packageRules: [
-    {
-      description: 'Use chore semantic type for all dependencies',
-      matchPackageNames: ['*'],
-      semanticCommits: 'enabled',
-      semanticCommitType: 'chore',
-    },
-    {
-      description: 'Group minor and patch version updates into a single PR',
-      groupName: 'all minor and patch dependencies',
-      groupSlug: 'all-minor-patch',
-      matchUpdateTypes: ['minor', 'patch'],
-    },
-    {
-      description: 'Limit node versions to those supported by GitHub Actions (divisible by 4)',
-      matchPackageNames: ['node', '@types/node'],
-      allowedVersions: '/([0-9]*[02468][048]|[0-9]*[13579][26]|[048])(\\.[0-9]+){2}$/',
-    },
-    {
-      description: 'Limit node major releases to ones that have been out for at least 3 months (to get LTS versions only)',
-      matchPackageNames: ['node', '@types/node'],
-      matchUpdateTypes: ['major'],
-      minimumReleaseAge: '3 months',
-      internalChecksFilter: 'strict',
-    },
     // Ignore these. Keep them at the end of the packageRules to maintain precedence.
     {
       enabled: false,
