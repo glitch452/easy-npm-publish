@@ -3,7 +3,7 @@ import { jsDoc, mdx, prettier, promise, typeEnabled, unicorn, vitest } from 'esl
 import { files } from 'eslint-config-spartan/utils';
 
 export default buildConfig(
-  typeEnabled({ parserOptions: { tsconfigRootDir: import.meta.dirname, project: './tsconfig.json' } }),
+  typeEnabled({ parserOptions: { tsconfigRootDir: import.meta.dirname, projectService: true } }),
   promise,
   unicorn,
   vitest,
