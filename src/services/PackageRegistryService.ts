@@ -24,17 +24,17 @@ export class PackageRegistryService implements PackageRegistry {
     packagePath: string,
     packageJson: PackageJsonSchema,
     isPrivate: boolean,
-    dryRun: boolean,
+    dryRunIsEnabled: boolean,
   ) {
     const scriptsPackageDirectory = path.dirname(scriptsPackagePath);
     const packageDirectory = path.dirname(packagePath);
 
-    const publishScriptExists = !!(scriptsPackagePath === packagePath
+    const publishScriptDidExist = !!(scriptsPackagePath === packagePath
       ? packageJson.scripts?.publish
       : this.files.readPackageJson(scriptsPackagePath).scripts?.publish);
 
-    if (publishScriptExists) {
-      if (dryRun) {
+    if (publishScriptDidExist) {
+      if (dryRunIsEnabled) {
         this.logger.info(`DRY RUN: Running script 'npm run publish' from directory '${scriptsPackageDirectory}'`);
       } else {
         await this.exec('npm', ['run', 'publish'], { cwd: scriptsPackageDirectory });
@@ -46,7 +46,7 @@ export class PackageRegistryService implements PackageRegistry {
         args.push('--verbose');
       }
 
-      if (dryRun) {
+      if (dryRunIsEnabled) {
         this.logger.info(`DRY RUN: Running script 'npm ${args.join(' ')}' from directory '${packageDirectory}'`);
       } else {
         await this.exec('npm', args, { cwd: packageDirectory });

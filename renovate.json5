@@ -10,14 +10,4 @@
 
   // Run on Friday Mornings
   schedule: ['* 0-6 * * 5'],
-
-  packageRules: [
-    // Ignore these. Keep them at the end of the packageRules to maintain precedence.
-    {
-      enabled: false,
-      matchManagers: ['npm'],
-      matchUpdateTypes: ['major'],
-      matchPackageNames: ['eslint'],
-    },
-  ],
 }

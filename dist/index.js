@@ -46930,14 +46930,14 @@ class PackageRegistryService {
         this.files = files;
         this.exec = exec;
     }
-    async publishPackage(scriptsPackagePath, packagePath, packageJson, isPrivate, dryRun) {
+    async publishPackage(scriptsPackagePath, packagePath, packageJson, isPrivate, dryRunIsEnabled) {
         const scriptsPackageDirectory = external_node_path_default().dirname(scriptsPackagePath);
         const packageDirectory = external_node_path_default().dirname(packagePath);
-        const publishScriptExists = !!(scriptsPackagePath === packagePath
+        const publishScriptDidExist = !!(scriptsPackagePath === packagePath
             ? packageJson.scripts?.publish
             : this.files.readPackageJson(scriptsPackagePath).scripts?.publish);
-        if (publishScriptExists) {
-            if (dryRun) {
+        if (publishScriptDidExist) {
+            if (dryRunIsEnabled) {
                 this.logger.info(`DRY RUN: Running script 'npm run publish' from directory '${scriptsPackageDirectory}'`);
             }
             else {
@@ -46950,7 +46950,7 @@ class PackageRegistryService {
             if (this.logger.isDebug()) {
                 args.push('--verbose');
             }
-            if (dryRun) {
+            if (dryRunIsEnabled) {
                 this.logger.info(`DRY RUN: Running script 'npm ${args.join(' ')}' from directory '${packageDirectory}'`);
             }
             else {
