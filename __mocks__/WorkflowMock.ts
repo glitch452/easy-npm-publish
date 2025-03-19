@@ -8,9 +8,11 @@ export class WorkflowMock implements Workflow {
     this.reset();
   }
 
-  reset(setDefaultValues: boolean = false) {
+  reset(shouldSetDefaultValues: boolean = false) {
     this.requestedInputs = new Set();
-    this.lookup = setDefaultValues ? { 'registry-token': '<registryToken>', 'github-token': '<githubToken>' } : {};
+    this.lookup = shouldSetDefaultValues
+      ? { 'registry-token': '<registryToken>', 'github-token': '<githubToken>' }
+      : {};
   }
 
   setInputValue(key: string, value: string) {
