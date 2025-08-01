@@ -37586,6 +37586,7 @@ const html5Email = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]
 const rfc5322Email = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 /** A loose regex that allows Unicode characters, enforces length limits, and that's about it. */
 const unicodeEmail = /^[^\s@"]{1,64}@[^\s@]{1,255}$/u;
+const idnEmail = /^[^\s@"]{1,64}@[^\s@]{1,255}$/u;
 const browserEmail = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 // from https://thekevinscott.com/emojis-in-javascript/#writing-a-regular-expression
 const _emoji = `^(\\p{Extended_Pictographic}|\\p{Emoji_Component})+$`;
@@ -37600,9 +37601,8 @@ const cidrv6 = /^(([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|::|([0-9a-fA-F]{1,4})?:
 const base64 = /^$|^(?:[0-9a-zA-Z+/]{4})*(?:(?:[0-9a-zA-Z+/]{2}==)|(?:[0-9a-zA-Z+/]{3}=))?$/;
 const base64url = /^[A-Za-z0-9_-]*$/;
 // based on https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address
-// export const hostname: RegExp =
-//   /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)+([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/;
-const hostname = /^([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+$/;
+// export const hostname: RegExp = /^([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+$/;
+const hostname = /^(?=.{1,253}\.?$)[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[-0-9a-zA-Z]{0,61}[0-9a-zA-Z])?)*\.?$/;
 const domain = /^([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
 // https://blog.stevenlevithan.com/archives/validate-phone-number#r4-3 (regex sans spaces)
 const e164 = /^\+(?:[0-9]){6,14}[0-9]$/;
@@ -37629,8 +37629,9 @@ function datetime(args) {
     const opts = ["Z"];
     if (args.local)
         opts.push("");
+    // if (args.offset) opts.push(`([+-]\\d{2}:\\d{2})`);
     if (args.offset)
-        opts.push(`([+-]\\d{2}:\\d{2})`);
+        opts.push(`([+-](?:[01]\\d|2[0-3]):[0-5]\\d)`);
     const timeRegex = `${time}(?:${opts.join("|")})`;
     return new RegExp(`^${dateSource}T(?:${timeRegex})$`);
 }
@@ -37702,7 +37703,14 @@ function cleanRegex(source) {
 }
 function floatSafeRemainder(val, step) {
     const valDecCount = (val.toString().split(".")[1] || "").length;
-    const stepDecCount = (step.toString().split(".")[1] || "").length;
+    const stepString = step.toString();
+    let stepDecCount = (stepString.split(".")[1] || "").length;
+    if (stepDecCount === 0 && /\d?e-\d?/.test(stepString)) {
+        const match = stepString.match(/\d?e-(\d?)/);
+        if (match?.[1]) {
+            stepDecCount = Number.parseInt(match[1]);
+        }
+    }
     const decCount = valDecCount > stepDecCount ? valDecCount : stepDecCount;
     const valInt = Number.parseInt(val.toFixed(decCount).replace(".", ""));
     const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));
@@ -38090,6 +38098,7 @@ function required(Class, schema, mask) {
     });
     return clone(schema, def);
 }
+// invalid_type | too_big | too_small | invalid_format | not_multiple_of | unrecognized_keys | invalid_union | invalid_key | invalid_element | invalid_value | custom
 function aborted(x, startIndex = 0) {
     for (let i = startIndex; i < x.issues.length; i++) {
         if (x.issues[i]?.continue !== true) {
@@ -38298,6 +38307,7 @@ const $ZodCheckNumberFormat = /*@__PURE__*/ (/* unused pure expression or super 
                     expected: origin,
                     format: def.format,
                     code: "invalid_type",
+                    continue: false,
                     input,
                     inst,
                 });
@@ -38727,6 +38737,7 @@ const $ZodCheckMimeType = /*@__PURE__*/ (/* unused pure expression or super */ n
             values: def.mime,
             input: payload.value.type,
             inst,
+            continue: !def.abort,
         });
     };
 })));
@@ -39029,7 +39040,7 @@ const safeParseAsync = /* @__PURE__*/ _safeParseAsync($ZodRealError);
 const version = {
     major: 4,
     minor: 0,
-    patch: 8,
+    patch: 13,
 };
 
 ;// CONCATENATED MODULE: ./node_modules/zod/v4/core/schemas.js
@@ -39867,7 +39878,7 @@ function handleUnionResults(results, final, inst, ctx) {
         }
     }
     const nonaborted = results.filter((r) => !aborted(r));
-    if (nonaborted.length > 0) {
+    if (nonaborted.length === 1) {
         final.value = nonaborted[0].value;
         return nonaborted[0];
     }
@@ -39896,7 +39907,12 @@ const $ZodUnion = /*@__PURE__*/ $constructor("$ZodUnion", (inst, def) => {
         }
         return undefined;
     });
+    const single = def.options.length === 1;
+    const first = def.options[0]._zod.run;
     inst._zod.parse = (payload, ctx) => {
+        if (single) {
+            return first(payload, ctx);
+        }
         let async = false;
         const results = [];
         for (const option of def.options) {
@@ -39981,6 +39997,7 @@ const $ZodDiscriminatedUnion =
             code: "invalid_union",
             errors: [],
             note: "No matching discriminator",
+            discriminator: def.discriminator,
             input,
             path: [def.discriminator],
             inst,
@@ -40087,10 +40104,10 @@ const $ZodTuple = /*@__PURE__*/ (/* unused pure expression or super */ null && (
             const tooSmall = input.length < optStart - 1;
             if (tooBig || tooSmall) {
                 payload.issues.push({
+                    ...(tooBig ? { code: "too_big", maximum: items.length } : { code: "too_small", minimum: items.length }),
                     input,
                     inst,
                     origin: "array",
-                    ...(tooBig ? { code: "too_big", maximum: items.length } : { code: "too_small", minimum: items.length }),
                 });
                 return payload;
             }
@@ -40202,8 +40219,8 @@ const $ZodRecord = /*@__PURE__*/ $constructor("$ZodRecord", (inst, def) => {
                 }
                 if (keyResult.issues.length) {
                     payload.issues.push({
-                        origin: "record",
                         code: "invalid_key",
+                        origin: "record",
                         issues: keyResult.issues.map((iss) => finalizeIssue(iss, ctx, config())),
                         input: key,
                         path: [key],
@@ -40274,8 +40291,8 @@ function handleMapResult(keyResult, valueResult, final, key, input, inst, ctx) {
         }
         else {
             final.issues.push({
-                origin: "map",
                 code: "invalid_key",
+                origin: "map",
                 input,
                 inst,
                 issues: keyResult.issues.map((iss) => util.finalizeIssue(iss, ctx, core.config())),
@@ -40358,6 +40375,9 @@ const $ZodEnum = /*@__PURE__*/ $constructor("$ZodEnum", (inst, def) => {
 });
 const $ZodLiteral = /*@__PURE__*/ (/* unused pure expression or super */ null && (core.$constructor("$ZodLiteral", (inst, def) => {
     $ZodType.init(inst, def);
+    if (def.values.length === 0) {
+        throw new Error("Cannot create literal schema with no valid values");
+    }
     inst._zod.values = new Set(def.values);
     inst._zod.pattern = new RegExp(`^(${def.values
         .map((o) => (typeof o === "string" ? util.escapeRegex(o) : o ? util.escapeRegex(o.toString()) : String(o)))
@@ -40410,6 +40430,12 @@ const $ZodTransform = /*@__PURE__*/ $constructor("$ZodTransform", (inst, def) =>
         return payload;
     };
 });
+function handleOptionalResult(result, input) {
+    if (result.issues.length && input === undefined) {
+        return { issues: [], value: undefined };
+    }
+    return result;
+}
 const $ZodOptional = /*@__PURE__*/ $constructor("$ZodOptional", (inst, def) => {
     $ZodType.init(inst, def);
     inst._zod.optin = "optional";
@@ -40423,7 +40449,10 @@ const $ZodOptional = /*@__PURE__*/ $constructor("$ZodOptional", (inst, def) => {
     });
     inst._zod.parse = (payload, ctx) => {
         if (def.innerType._zod.optin === "optional") {
-            return def.innerType._zod.run(payload, ctx);
+            const result = def.innerType._zod.run(payload, ctx);
+            if (result instanceof Promise)
+                return result.then((r) => handleOptionalResult(r, payload.value));
+            return handleOptionalResult(result, payload.value);
         }
         if (payload.value === undefined) {
             return payload;
@@ -41579,13 +41608,6 @@ function _custom(Class, fn, _params) {
     });
     return schema;
 }
-// export function _refine<T>(
-//   Class: util.SchemaClass<schemas.$ZodCustom>,
-//   fn: (arg: NoInfer<T>) => util.MaybeAsync<unknown>,
-//   _params: string | $ZodCustomParams = {}
-// ): checks.$ZodCheck<T> {
-//   return _custom(Class, fn, _params);
-// }
 // same as _custom but defaults to abort:false
 function _refine(Class, fn, _params) {
     const schema = new Class({
@@ -41595,6 +41617,36 @@ function _refine(Class, fn, _params) {
         ...normalizeParams(_params),
     });
     return schema;
+}
+function _superRefine(fn) {
+    const ch = _check((payload) => {
+        payload.addIssue = (issue) => {
+            if (typeof issue === "string") {
+                payload.issues.push(util_issue(issue, payload.value, ch._zod.def));
+            }
+            else {
+                // for Zod 3 backwards compatibility
+                const _issue = issue;
+                if (_issue.fatal)
+                    _issue.continue = false;
+                _issue.code ?? (_issue.code = "custom");
+                _issue.input ?? (_issue.input = payload.value);
+                _issue.inst ?? (_issue.inst = ch);
+                _issue.continue ?? (_issue.continue = !ch._zod.def.abort);
+                payload.issues.push(util_issue(_issue));
+            }
+        };
+        return fn(payload.value, payload);
+    });
+    return ch;
+}
+function _check(fn, params) {
+    const ch = new $ZodCheck({
+        check: "custom",
+        ...normalizeParams(params),
+    });
+    ch._zod.check = fn;
+    return ch;
 }
 function _stringbool(Classes, _params) {
     const params = util.normalizeParams(_params);
@@ -41629,6 +41681,7 @@ function _stringbool(Classes, _params) {
                     values: [...truthySet, ...falsySet],
                     input: payload.value,
                     inst: tx,
+                    continue: false,
                 });
                 return {};
             }
@@ -42070,6 +42123,9 @@ const ZodCustomStringFormat = /*@__PURE__*/ (/* unused pure expression or super 
 })));
 function stringFormat(format, fnOrRegex, _params = {}) {
     return core._stringFormat(ZodCustomStringFormat, format, fnOrRegex, _params);
+}
+function schemas_hostname(_params) {
+    return core._stringFormat(ZodCustomStringFormat, "hostname", core.regexes.hostname, _params);
 }
 const ZodNumber = /*@__PURE__*/ (/* unused pure expression or super */ null && (core.$constructor("ZodNumber", (inst, def) => {
     core.$ZodNumber.init(inst, def);
@@ -42701,7 +42757,7 @@ const ZodCustom = /*@__PURE__*/ $constructor("ZodCustom", (inst, def) => {
 });
 // custom checks
 function check(fn) {
-    const ch = new $ZodCheck({
+    const ch = new core.$ZodCheck({
         check: "custom",
         // ...util.normalizeParams(params),
     });
@@ -42716,26 +42772,7 @@ function refine(fn, _params = {}) {
 }
 // superRefine
 function superRefine(fn) {
-    const ch = check((payload) => {
-        payload.addIssue = (issue) => {
-            if (typeof issue === "string") {
-                payload.issues.push(util_issue(issue, payload.value, ch._zod.def));
-            }
-            else {
-                // for Zod 3 backwards compatibility
-                const _issue = issue;
-                if (_issue.fatal)
-                    _issue.continue = false;
-                _issue.code ?? (_issue.code = "custom");
-                _issue.input ?? (_issue.input = payload.value);
-                _issue.inst ?? (_issue.inst = ch);
-                _issue.continue ?? (_issue.continue = !ch._zod.def.abort);
-                payload.issues.push(util_issue(_issue));
-            }
-        };
-        return fn(payload.value, payload);
-    });
-    return ch;
+    return _superRefine(fn);
 }
 function _instanceof(cls, params = {
     error: `Input not instance of ${cls.name}`,
