@@ -56,8 +56,8 @@
     "chardet": "2.1.0",
     "semver": "7.7.2",
     "simple-git": "3.28.0",
-    "yaml": "2.8.0",
-    "zod": "4.0.13"
+    "yaml": "2.8.1",
+    "zod": "4.0.14"
   },
   "devDependencies": {
     "@commitlint/cli": "19.8.1",
@@ -70,12 +70,12 @@
     "eslint": "9.32.0",
     "eslint-config-spartan": "5.0.1",
     "husky": "9.1.7",
-    "lint-staged": "16.1.2",
-    "memfs": "4.23.0",
+    "lint-staged": "16.1.4",
+    "memfs": "4.36.0",
     "msw": "2.10.4",
     "prettier": "3.6.2",
     "rimraf": "6.0.1",
-    "typescript": "5.8.3",
+    "typescript": "5.9.2",
     "vitest": "3.2.4"
   }
 }
