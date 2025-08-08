@@ -37716,16 +37716,20 @@ function floatSafeRemainder(val, step) {
     const stepInt = Number.parseInt(step.toFixed(decCount).replace(".", ""));
     return (valInt % stepInt) / 10 ** decCount;
 }
+const EVALUATING = Symbol("evaluating");
 function defineLazy(object, key, getter) {
-    const set = false;
+    let value = undefined;
     Object.defineProperty(object, key, {
         get() {
-            if (!set) {
-                const value = getter();
-                object[key] = value;
-                return value;
+            if (value === EVALUATING) {
+                // Circular reference detected, return undefined to break the cycle
+                return undefined;
             }
-            throw new Error("cached value already set");
+            if (value === undefined) {
+                value = EVALUATING;
+                value = getter();
+            }
+            return value;
         },
         set(v) {
             Object.defineProperty(object, key, {
@@ -39040,7 +39044,7 @@ const safeParseAsync = /* @__PURE__*/ _safeParseAsync($ZodRealError);
 const version = {
     major: 4,
     minor: 0,
-    patch: 13,
+    patch: 14,
 };
 
 ;// CONCATENATED MODULE: ./node_modules/zod/v4/core/schemas.js
@@ -40699,11 +40703,18 @@ const $ZodPromise = /*@__PURE__*/ (/* unused pure expression or super */ null &&
 })));
 const $ZodLazy = /*@__PURE__*/ (/* unused pure expression or super */ null && (core.$constructor("$ZodLazy", (inst, def) => {
     $ZodType.init(inst, def);
+    // let _innerType!: any;
+    // util.defineLazy(def, "getter", () => {
+    //   if (!_innerType) {
+    //     _innerType = def.getter();
+    //   }
+    //   return () => _innerType;
+    // });
     util.defineLazy(inst._zod, "innerType", () => def.getter());
     util.defineLazy(inst._zod, "pattern", () => inst._zod.innerType._zod.pattern);
     util.defineLazy(inst._zod, "propValues", () => inst._zod.innerType._zod.propValues);
-    util.defineLazy(inst._zod, "optin", () => inst._zod.innerType._zod.optin);
-    util.defineLazy(inst._zod, "optout", () => inst._zod.innerType._zod.optout);
+    util.defineLazy(inst._zod, "optin", () => inst._zod.innerType._zod.optin ?? undefined);
+    util.defineLazy(inst._zod, "optout", () => inst._zod.innerType._zod.optout ?? undefined);
     inst._zod.parse = (payload, ctx) => {
         const inner = inst._zod.innerType;
         return inner._zod.run(payload, ctx);
