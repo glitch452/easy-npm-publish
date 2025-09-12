@@ -74,8 +74,8 @@ describe(run.name, () => {
 
   it('should set all of the output values defined in the action.yml file', async () => {
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
-    const actual = setOutputSpy.mock.calls.map(([x]) => x).sort();
-    const expected = Object.keys(actionFile.outputs).sort();
+    const actual = setOutputSpy.mock.calls.map(([x]) => x).toSorted();
+    const expected = Object.keys(actionFile.outputs).toSorted();
     expect(actual).toStrictEqual(expected);
   });
 
