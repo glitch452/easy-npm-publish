@@ -23,8 +23,8 @@ describe(getInputs.name, () => {
     it('should request all and only the inputs that are listed in the action', () => {
       getInputs(workflowMock);
 
-      const actual = Object.keys(actionFile.inputs).sort();
-      const expected = [...workflowMock.requestedInputs].sort();
+      const actual = Object.keys(actionFile.inputs).toSorted();
+      const expected = [...workflowMock.requestedInputs].toSorted();
       expect(actual).toStrictEqual(expected);
     });
 
