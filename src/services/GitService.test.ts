@@ -28,12 +28,14 @@ describe(GitService.name, () => {
     it('should call the underlying tag method with the "--force" option for the first tag provided', async () => {
       const tags = ['<tag1>', '<tag2>'];
       await gitService.addTags(tags);
+      // eslint-disable-next-line vitest/prefer-called-exactly-once-with
       expect(gitMock.tag).toHaveBeenCalledWith(['<tag1>', '--force']);
     });
 
     it('should call the underlying tag method with the "--force" option for the second tag provided', async () => {
       const tags = ['<tag1>', '<tag2>'];
       await gitService.addTags(tags);
+      // eslint-disable-next-line vitest/prefer-called-exactly-once-with
       expect(gitMock.tag).toHaveBeenCalledWith(['<tag2>', '--force']);
     });
   });
@@ -102,6 +104,7 @@ describe(GitService.name, () => {
       it('should call fetch with the "--unshallow" flag if the repo is shallow and the fromTag and latest tags are not found', async () => {
         const range = { fromTag: 'fromTag', fromSha: 'fromSha', toSha: 'toSha' };
         await gitService.getHistory(range);
+        // eslint-disable-next-line vitest/prefer-called-exactly-once-with
         expect(gitMock.fetch).toHaveBeenCalledWith(['--unshallow']);
       });
 

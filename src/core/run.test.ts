@@ -107,6 +107,7 @@ describe(run.name, () => {
     // eslint-disable-next-line unicorn/no-useless-undefined -- Typedef requires a value
     getLatestPackageDetailsSpy.mockResolvedValue(undefined);
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
+    // eslint-disable-next-line vitest/prefer-called-exactly-once-with
     expect(setOutputSpy).toHaveBeenCalledWith('current-version', packageJson.version);
   });
 
@@ -115,46 +116,54 @@ describe(run.name, () => {
     getLatestPackageDetailsSpy.mockResolvedValue(undefined);
     fs.writeFileSync(path.join(repoDir, 'package.json'), JSON.stringify({ name: 'name', version: 'invalid-version' }));
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
+    // eslint-disable-next-line vitest/prefer-called-exactly-once-with
     expect(setOutputSpy).toHaveBeenCalledWith('current-version', '0.0.0');
   });
 
   it('should override the next version provided by the "version-override" input', async () => {
     workflow.setInputValue('version-override', '2.0.0');
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
+    // eslint-disable-next-line vitest/prefer-called-exactly-once-with
     expect(setOutputSpy).toHaveBeenCalledWith('next-version', '2.0.0');
   });
 
   it('should set the correct increment-type when the "version-override" input is for a patch version', async () => {
     workflow.setInputValue('version-override', '1.0.1');
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
+    // eslint-disable-next-line vitest/prefer-called-exactly-once-with
     expect(setOutputSpy).toHaveBeenCalledWith('increment-type', 'patch');
   });
 
   it('should set the correct increment-type when the "version-override" input is for a minor version', async () => {
     workflow.setInputValue('version-override', '1.1.0');
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
+    // eslint-disable-next-line vitest/prefer-called-exactly-once-with
     expect(setOutputSpy).toHaveBeenCalledWith('increment-type', 'minor');
   });
 
   it('should set the correct increment-type when the "version-override" input is for a major version', async () => {
     workflow.setInputValue('version-override', '2.0.0');
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
+    // eslint-disable-next-line vitest/prefer-called-exactly-once-with
     expect(setOutputSpy).toHaveBeenCalledWith('increment-type', 'major');
   });
 
   it('should set the increment type to "patch" when there is no git history', async () => {
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
+    // eslint-disable-next-line vitest/prefer-called-exactly-once-with
     expect(setOutputSpy).toHaveBeenCalledWith('increment-type', 'patch');
   });
 
   it('should set the increment type to an empty string when the "version-override" input is the same as the current version', async () => {
     workflow.setInputValue('version-override', '1.0.0');
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
+    // eslint-disable-next-line vitest/prefer-called-exactly-once-with
     expect(setOutputSpy).toHaveBeenCalledWith('increment-type', '');
   });
 
   it('should increase the patch part of the version when there is no git history', async () => {
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
+    // eslint-disable-next-line vitest/prefer-called-exactly-once-with
     expect(setOutputSpy).toHaveBeenCalledWith('next-version', '1.0.1');
   });
 
@@ -261,6 +270,7 @@ describe(run.name, () => {
   it('should increment a patch version if the git history only contains patch related nodes', async () => {
     getHistorySpy.mockResolvedValue([makeGitHistory({ message: 'fix: Fix' })]);
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
+    // eslint-disable-next-line vitest/prefer-called-exactly-once-with
     expect(setOutputSpy).toHaveBeenCalledWith('increment-type', 'patch');
   });
 
@@ -270,6 +280,7 @@ describe(run.name, () => {
       makeGitHistory({ message: 'fix: Fix' }),
     ]);
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
+    // eslint-disable-next-line vitest/prefer-called-exactly-once-with
     expect(setOutputSpy).toHaveBeenCalledWith('increment-type', 'minor');
   });
 
@@ -280,6 +291,7 @@ describe(run.name, () => {
       makeGitHistory({ message: 'fix: Fix' }),
     ]);
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
+    // eslint-disable-next-line vitest/prefer-called-exactly-once-with
     expect(setOutputSpy).toHaveBeenCalledWith('increment-type', 'major');
   });
 
@@ -287,6 +299,7 @@ describe(run.name, () => {
     workflow.setInputValue('major-types', 'special');
     getHistorySpy.mockResolvedValue([makeGitHistory({ message: 'special: Major Feature' })]);
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
+    // eslint-disable-next-line vitest/prefer-called-exactly-once-with
     expect(setOutputSpy).toHaveBeenCalledWith('increment-type', 'major');
   });
 
@@ -294,6 +307,7 @@ describe(run.name, () => {
     workflow.setInputValue('minor-types', 'special');
     getHistorySpy.mockResolvedValue([makeGitHistory({ message: 'special: minor Feature' })]);
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
+    // eslint-disable-next-line vitest/prefer-called-exactly-once-with
     expect(setOutputSpy).toHaveBeenCalledWith('increment-type', 'minor');
   });
 
@@ -317,7 +331,7 @@ describe(run.name, () => {
     getHistorySpy.mockResolvedValue([makeGitHistory({ message: 'feat!: <majorFeatureSummary>' })]);
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
     const expected = expect.objectContaining({ body: expect.stringContaining('<majorFeatureSummary>') });
-    expect(createReleaseSpy).toHaveBeenCalledWith(expected);
+    expect(createReleaseSpy).toHaveBeenCalledExactlyOnceWith(expected);
   });
 
   it('should use the version tag as the release title by default', async () => {
@@ -468,7 +482,7 @@ describe(run.name, () => {
     getHistorySpy.mockResolvedValue([makeGitHistory({ message: 'feat!: <majorFeatureSummary>' })]);
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
     const expected = expect.objectContaining({ body: expect.stringContaining('BREAKING CHANGES') });
-    expect(createReleaseSpy).toHaveBeenCalledWith(expected);
+    expect(createReleaseSpy).toHaveBeenCalledExactlyOnceWith(expected);
   });
 
   it('should use the changelog titles provided by the "changelog-titles" input', async () => {
@@ -477,7 +491,7 @@ describe(run.name, () => {
     getHistorySpy.mockResolvedValue([makeGitHistory({ message: 'feat: <featureSummary>' })]);
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
     const expected = expect.objectContaining({ body: expect.stringContaining('<featureTitle>') });
-    expect(createReleaseSpy).toHaveBeenCalledWith(expected);
+    expect(createReleaseSpy).toHaveBeenCalledExactlyOnceWith(expected);
   });
 
   it('should use the values provided by the "major-types" input when grouping entries for the changelog', async () => {
@@ -486,7 +500,7 @@ describe(run.name, () => {
     getHistorySpy.mockResolvedValue([makeGitHistory({ message: 'example: <summary>' })]);
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
     const expected = expect.objectContaining({ body: expect.stringContaining('BREAKING CHANGES') });
-    expect(createReleaseSpy).toHaveBeenCalledWith(expected);
+    expect(createReleaseSpy).toHaveBeenCalledExactlyOnceWith(expected);
   });
 
   it('should append the value from the "git-tag-suffix" input to the git tags', async () => {
