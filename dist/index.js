@@ -9048,15 +9048,27 @@ const detectFile = (filepath, opts = {}) => new Promise((resolve, reject) => {
         if (err) {
             reject(err);
         }
-        else {
+        else if (buffer) {
             resolve((0, exports.detect)(buffer));
         }
+        else {
+            reject(new Error('No error and no buffer received'));
+        }
     };
-    if (opts && opts.sampleSize) {
+    const sampleSize = (opts === null || opts === void 0 ? void 0 : opts.sampleSize) || 0;
+    if (sampleSize > 0) {
         fd = fs.openSync(filepath, 'r');
-        const sample = Buffer.allocUnsafe(opts.sampleSize);
-        fs.read(fd, sample, 0, opts.sampleSize, opts.offset, (err) => {
-            handler(err, sample);
+        let sample = Buffer.allocUnsafe(sampleSize);
+        fs.read(fd, sample, 0, sampleSize, opts.offset, (err, bytesRead) => {
+            if (err) {
+                handler(err, null);
+            }
+            else {
+                if (bytesRead < sampleSize) {
+                    sample = sample.subarray(0, bytesRead);
+                }
+                handler(null, sample);
+            }
         });
         return;
     }
@@ -9067,8 +9079,11 @@ const detectFileSync = (filepath, opts = {}) => {
     const fs = (0, node_1.default)();
     if (opts && opts.sampleSize) {
         const fd = fs.openSync(filepath, 'r');
-        const sample = Buffer.allocUnsafe(opts.sampleSize);
-        fs.readSync(fd, sample, 0, opts.sampleSize, opts.offset);
+        let sample = Buffer.allocUnsafe(opts.sampleSize);
+        const bytesRead = fs.readSync(fd, sample, 0, opts.sampleSize, opts.offset);
+        if (bytesRead < opts.sampleSize) {
+            sample = sample.subarray(0, bytesRead);
+        }
         fs.closeSync(fd);
         return (0, exports.detect)(sample);
     }
@@ -50376,7 +50391,7 @@ function last(input, offset = 0) {
   }
 }
 function isArrayLike(input) {
-  return !!(input && typeof input.length === "number");
+  return filterHasLength(input);
 }
 function toLinesWithContent(input = "", trimmed2 = true, separator = "\n") {
   return input.split(separator).reduce((output, line) => {
@@ -50429,14 +50444,16 @@ function asCamelCase(str) {
   });
 }
 function asStringArray(source) {
-  return asArray(source).map(String);
+  return asArray(source).map((item) => {
+    return item instanceof String ? item : String(item);
+  });
 }
 function asNumber(source, onNaN = 0) {
   if (source == null) {
     return onNaN;
   }
   const num = parseInt(source, 10);
-  return isNaN(num) ? onNaN : num;
+  return Number.isNaN(num) ? onNaN : num;
 }
 function prefixedArray(input, prefix) {
   const output = [];
@@ -50449,10 +50466,13 @@ function bufferToString(input) {
   return (Array.isArray(input) ? external_node_buffer_namespaceObject.Buffer.concat(input) : input).toString("utf-8");
 }
 function esm_pick(source, properties) {
-  return Object.assign(
-    {},
-    ...properties.map((property) => property in source ? { [property]: source[property] } : {})
-  );
+  const out = {};
+  properties.forEach((key) => {
+    if (source[key] !== void 0) {
+      out[key] = source[key];
+    }
+  });
+  return out;
 }
 function delay(duration = 0) {
   return new Promise((done) => setTimeout(done, duration));
@@ -50467,6 +50487,7 @@ var NULL, NOOP, objectToString;
 var init_util = __esm({
   "src/lib/utils/util.ts"() {
     "use strict";
+    init_argument_filters();
     NULL = "\0";
     NOOP = () => {
     };
@@ -50491,20 +50512,20 @@ function filterPlainObject(input) {
 function filterFunction(input) {
   return typeof input === "function";
 }
-var filterArray, filterString, filterStringArray, filterStringOrStringArray, filterHasLength;
+var filterArray, filterNumber, filterString, filterStringOrStringArray, filterHasLength;
 var init_argument_filters = __esm({
   "src/lib/utils/argument-filters.ts"() {
     "use strict";
-    init_util();
     init_pathspec();
+    init_util();
     filterArray = (input) => {
       return Array.isArray(input);
     };
+    filterNumber = (input) => {
+      return typeof input === "number";
+    };
     filterString = (input) => {
       return typeof input === "string";
-    };
-    filterStringArray = (input) => {
-      return Array.isArray(input) && input.every(filterString);
     };
     filterStringOrStringArray = (input) => {
       return filterString(input) || Array.isArray(input) && input.every(filterString);
@@ -50513,7 +50534,7 @@ var init_argument_filters = __esm({
       if (input == null || "number|boolean|function".includes(typeof input)) {
         return false;
       }
-      return Array.isArray(input) || typeof input === "string" || typeof input.length === "number";
+      return typeof input.length === "number";
     };
   }
 });
@@ -50551,6 +50572,9 @@ var init_git_output_streams = __esm({
 });
 
 // src/lib/utils/line-parser.ts
+function useMatchesDefault() {
+  throw new Error(`LineParser:useMatches not implemented`);
+}
 var LineParser, RemoteLineParser;
 var init_line_parser = __esm({
   "src/lib/utils/line-parser.ts"() {
@@ -50558,6 +50582,7 @@ var init_line_parser = __esm({
     LineParser = class {
       constructor(regExp, useMatches) {
         this.matches = [];
+        this.useMatches = useMatchesDefault;
         this.parse = (line, target) => {
           this.resetMatches();
           if (!this._regExp.every((reg, index) => this.addMatch(reg, index, line(index)))) {
@@ -50569,10 +50594,6 @@ var init_line_parser = __esm({
         if (useMatches) {
           this.useMatches = useMatches;
         }
-      }
-      // @ts-ignore
-      useMatches(target, match) {
-        throw new Error(`LineParser:useMatches not implemented`);
       }
       resetMatches() {
         this.matches.length = 0;
@@ -50666,7 +50687,7 @@ function getTrailingOptions(args, initialPrimitive = 0, objectOnly = false) {
 }
 function trailingArrayArgument(args) {
   const hasTrailingCallback = typeof last(args) === "function";
-  return filterType(last(args, hasTrailingCallback ? 1 : 0), filterArray, []);
+  return asStringArray(filterType(last(args, hasTrailingCallback ? 1 : 0), filterArray, []));
 }
 function trailingOptionsArgument(args) {
   const hasTrailingCallback = filterFunction(last(args));
@@ -50733,10 +50754,10 @@ __export(utils_exports, {
   filterArray: () => filterArray,
   filterFunction: () => filterFunction,
   filterHasLength: () => filterHasLength,
+  filterNumber: () => filterNumber,
   filterPlainObject: () => filterPlainObject,
   filterPrimitives: () => filterPrimitives,
   filterString: () => filterString,
-  filterStringArray: () => filterStringArray,
   filterStringOrStringArray: () => filterStringOrStringArray,
   filterType: () => filterType,
   first: () => first,
@@ -51100,7 +51121,7 @@ var init_ConfigList = __esm({
       }
       addValue(file, key, value) {
         const values = this.addFile(file);
-        if (!values.hasOwnProperty(key)) {
+        if (!Object.hasOwn(values, key)) {
           values[key] = value;
         } else if (Array.isArray(values[key])) {
           values[key].push(value);
@@ -51115,7 +51136,7 @@ var init_ConfigList = __esm({
 
 // src/lib/tasks/config.ts
 function asConfigScope(scope, fallback) {
-  if (typeof scope === "string" && GitConfigScope.hasOwnProperty(scope)) {
+  if (typeof scope === "string" && Object.hasOwn(GitConfigScope, scope)) {
     return scope;
   }
   return fallback;
@@ -51334,12 +51355,13 @@ function getResetMode(mode) {
   return;
 }
 function isValidResetMode(mode) {
-  return ResetModes.includes(mode);
+  return typeof mode === "string" && validResetModes.includes(mode);
 }
-var ResetMode, ResetModes;
+var ResetMode, validResetModes;
 var init_reset = __esm({
   "src/lib/tasks/reset.ts"() {
     "use strict";
+    init_utils();
     init_task();
     ResetMode = /* @__PURE__ */ ((ResetMode2) => {
       ResetMode2["MIXED"] = "mixed";
@@ -51349,7 +51371,7 @@ var init_reset = __esm({
       ResetMode2["KEEP"] = "keep";
       return ResetMode2;
     })(ResetMode || {});
-    ResetModes = Array.from(Object.values(ResetMode));
+    validResetModes = asStringArray(Object.values(ResetMode));
   }
 });
 
@@ -51879,7 +51901,7 @@ var init_count_objects = __esm({
       /([a-z-]+): (\d+)$/,
       (result, [key, value]) => {
         const property = asCamelCase(key);
-        if (result.hasOwnProperty(property)) {
+        if (Object.hasOwn(result, property)) {
           result[property] = asNumber(value);
         }
       }
@@ -51971,7 +51993,10 @@ function commit_default() {
       const task = rejectDeprecatedSignatures(message) || commitTask(
         asArray(message),
         asArray(filterType(rest[0], filterStringOrStringArray, [])),
-        [...filterType(rest[1], filterArray, []), ...getTrailingOptions(arguments, 0, true)]
+        [
+          ...asStringArray(filterType(rest[1], filterArray, [])),
+          ...getTrailingOptions(arguments, 0, true)
+        ]
       );
       return this._runTask(task, next);
     }
@@ -52397,7 +52422,7 @@ function log_default() {
       const next = trailingFunctionArgument(arguments);
       const options = parseLogOptions(
         trailingOptionsArgument(arguments),
-        filterType(arguments[0], filterArray)
+        asStringArray(filterType(arguments[0], filterArray, []))
       );
       const task = rejectDeprecatedSignatures(...rest) || validateLogFormatConfig(options.commands) || createLogTask(options);
       return this._runTask(task, next);
@@ -53042,18 +53067,19 @@ var init_StatusSummary = __esm({
           const behindReg = /behind (\d+)/;
           const currentReg = /^(.+?(?=(?:\.{3}|\s|$)))/;
           const trackingReg = /\.{3}(\S*)/;
-          const onEmptyBranchReg = /\son\s([\S]+)$/;
-          let regexResult;
-          regexResult = aheadReg.exec(line);
+          const onEmptyBranchReg = /\son\s(\S+?)(?=\.{3}|$)/;
+          let regexResult = aheadReg.exec(line);
           result.ahead = regexResult && +regexResult[1] || 0;
           regexResult = behindReg.exec(line);
           result.behind = regexResult && +regexResult[1] || 0;
           regexResult = currentReg.exec(line);
-          result.current = regexResult && regexResult[1];
+          result.current = filterType(regexResult?.[1], filterString, null);
           regexResult = trackingReg.exec(line);
-          result.tracking = regexResult && regexResult[1];
+          result.tracking = filterType(regexResult?.[1], filterString, null);
           regexResult = onEmptyBranchReg.exec(line);
-          result.current = regexResult && regexResult[1] || result.current;
+          if (regexResult) {
+            result.current = filterType(regexResult?.[1], filterString, result.current);
+          }
           result.detached = /\(no branch\)/.test(line);
         }
       ]
@@ -53488,10 +53514,14 @@ var init_BranchSummary = __esm({
 function branchStatus(input) {
   return input ? input.charAt(0) : "";
 }
-function parseBranchSummary(stdOut) {
-  return parseStringResponse(new BranchSummaryResult(), parsers9, stdOut);
+function parseBranchSummary(stdOut, currentOnly = false) {
+  return parseStringResponse(
+    new BranchSummaryResult(),
+    currentOnly ? [currentBranchParser] : parsers9,
+    stdOut
+  );
 }
-var parsers9;
+var parsers9, currentBranchParser;
 var init_parse_branch = __esm({
   "src/lib/parsers/parse-branch.ts"() {
     "use strict";
@@ -53511,6 +53541,9 @@ var init_parse_branch = __esm({
         }
       )
     ];
+    currentBranchParser = new LineParser(/^(\S+)$/s, (result, [name]) => {
+      result.push("*" /* CURRENT */, false, name, "", "");
+    });
   }
 });
 
@@ -53529,6 +53562,7 @@ function containsDeleteBranchCommand(commands) {
 }
 function branchTask(customArgs) {
   const isDelete = containsDeleteBranchCommand(customArgs);
+  const isCurrentOnly = customArgs.includes("--show-current");
   const commands = ["branch", ...customArgs];
   if (commands.length === 1) {
     commands.push("-a");
@@ -53543,16 +53577,17 @@ function branchTask(customArgs) {
       if (isDelete) {
         return parseBranchDeletions(stdOut, stdErr).all[0];
       }
-      return parseBranchSummary(stdOut);
+      return parseBranchSummary(stdOut, isCurrentOnly);
     }
   };
 }
 function branchLocalTask() {
-  const parser4 = parseBranchSummary;
   return {
     format: "utf-8",
     commands: ["branch", "-v"],
-    parser: parser4
+    parser(stdOut) {
+      return parseBranchSummary(stdOut);
+    }
   };
 }
 function deleteBranchesTask(branches, forceDelete = false) {
@@ -53600,12 +53635,17 @@ var init_branch = __esm({
 });
 
 // src/lib/responses/CheckIgnore.ts
+
+function toPath(input) {
+  const path = input.trim().replace(/^["']|["']$/g, "");
+  return path && (0,external_node_path_namespaceObject.normalize)(path);
+}
 var parseCheckIgnore;
 var init_CheckIgnore = __esm({
   "src/lib/responses/CheckIgnore.ts"() {
     "use strict";
     parseCheckIgnore = (text) => {
-      return text.split(/\n/g).map((line) => line.trim()).filter((file) => !!file);
+      return text.split(/\n/g).map(toPath).filter(Boolean);
     };
   }
 });
@@ -53827,7 +53867,7 @@ function parseGetRemotes(text) {
 function parseGetRemotesVerbose(text) {
   const remotes = {};
   forEach(text, ([name, url, purpose]) => {
-    if (!remotes.hasOwnProperty(name)) {
+    if (!Object.hasOwn(remotes, name)) {
       remotes[name] = {
         name,
         refs: { fetch: "", push: "" }
@@ -53959,8 +53999,8 @@ var init_sub_module = __esm({
 
 // src/lib/responses/TagList.ts
 function singleSorted(a, b) {
-  const aIsNum = isNaN(a);
-  const bIsNum = isNaN(b);
+  const aIsNum = Number.isNaN(a);
+  const bIsNum = Number.isNaN(b);
   if (aIsNum !== bIsNum) {
     return aIsNum ? 1 : -1;
   }
