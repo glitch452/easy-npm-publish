@@ -34,7 +34,7 @@ export function getInputs(getters: Pick<Workflow, 'getBooleanInput' | 'getInput'
     packageDirectory: getters.getInput('package-directory') || '.',
     prependVersionToReleaseTitle: getters.getBooleanInput('prepend-version-to-release-title'),
     private: getters.getBooleanInput('private'),
-    registryToken: getters.getInput('registry-token', { required: true }),
+    registryToken: getters.getInput('registry-token'),
     releaseTitle: getters.getInput('release-title'),
     registryUrl: new URL(
       originals.registryUrl.startsWith('http') ? originals.registryUrl : `https://${originals.registryUrl}`,
