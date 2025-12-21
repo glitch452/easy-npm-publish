@@ -91,113 +91,87 @@ describe(PackageRegistryService.name, () => {
     });
   });
 
-  describe(PackageRegistryService.prototype.getLatestPackageDetails.name, () => {
+  describe(PackageRegistryService.prototype.getPackageDetails.name, () => {
     const url = new URL('https://myregistry.test');
     const packageName = '<packageName>';
     const registryToken = '<registryToken>';
     const registryMeta = { name: '<name>', version: '<version>', gitHead: '<gitHead>' };
+    const unpublishedDetails = {
+      time: '2024-07-21T07:13:03.593Z',
+      versions: ['0.0.1', '0.1.0', '0.2.0', '1.0.0', '2.0.0'],
+    };
+    const timeObject = {
+      created: '2024-07-21T06:43:13.180Z',
+      modified: '2025-12-20T20:38:36.378Z',
+      '0.0.1': '2024-07-21T06:43:13.461Z',
+      '0.1.0': '2024-07-21T06:45:42.396Z',
+      '0.2.0': '2024-07-21T06:58:48.892Z',
+      '1.0.0': '2024-07-21T07:00:32.254Z',
+      '2.0.0': '2024-07-21T07:05:02.559Z',
+      unpublished: unpublishedDetails,
+    };
     const packageEndpoint = `${url.toString()}${encodeURIComponent(packageName)}`;
-    const latestEndpoint = `${packageEndpoint}/latest`;
     let authHeader: string | undefined;
 
     afterEach(() => {
       server.resetHandlers();
     });
 
-    describe('Using the "/latest" endpoint', () => {
-      beforeEach(() => {
-        server.use(http.get(latestEndpoint, () => HttpResponse.json(registryMeta)));
-      });
-
-      it('should return the package details found at the "/latest" endpoint if it is available', async () => {
-        const actual = await registryService.getLatestPackageDetails(url, packageName);
-        const expected = registryMeta;
-        expect(actual).toStrictEqual(expected);
-      });
-    });
-
     describe('Using the package endpoint', () => {
       beforeEach(() => {
         server.use(
           http.get(packageEndpoint, () =>
-            HttpResponse.json({ 'dist-tags': { latest: '0.0.0' }, versions: { '0.0.0': registryMeta }, time: {} }),
+            HttpResponse.json({
+              'dist-tags': { latest: '0.0.0' },
+              versions: { '0.0.0': registryMeta },
+              time: timeObject,
+            }),
           ),
         );
       });
 
-      it('should return the latest details found at the package endpoint when the "/latest" endpoint returns a 404 status code', async () => {
-        server.use(http.get(latestEndpoint, () => new HttpResponse(undefined, { status: 404 })));
-        const actual = await registryService.getLatestPackageDetails(url, packageName);
+      it('should return the latest details found at the package endpoint', async () => {
+        const actual = (await registryService.getPackageDetails(url, packageName)).latest;
         expect(actual).toStrictEqual(registryMeta);
       });
 
-      it('should return the latest details found at the package endpoint when the "/latest" endpoint returns a 500 status code', async () => {
-        server.use(http.get(latestEndpoint, () => new HttpResponse(undefined, { status: 500 })));
-        const actual = await registryService.getLatestPackageDetails(url, packageName);
-        expect(actual).toStrictEqual(registryMeta);
+      it('should return the existing versions found at the package endpoint', async () => {
+        const actual = (await registryService.getPackageDetails(url, packageName)).existingVersions;
+        const expected = new Set(['0.0.1', '0.1.0', '0.2.0', '1.0.0', '2.0.0']);
+        expect(actual).toStrictEqual(expected);
       });
 
-      it('should get the data from the package endpoint when the "/latest" endpoint returns non-json data', async () => {
-        server.use(http.get(latestEndpoint, () => HttpResponse.text('I am not JSON')));
-        const actual = await registryService.getLatestPackageDetails(url, packageName);
-        expect(actual).toStrictEqual(registryMeta);
-      });
-
-      it('should get the data from the package endpoint when the "/latest" endpoint returns invalid data', async () => {
-        server.use(http.get(latestEndpoint, () => HttpResponse.json({ ...registryMeta, name: false })));
-        const actual = await registryService.getLatestPackageDetails(url, packageName);
-        expect(actual).toStrictEqual(registryMeta);
-      });
-
-      it('should get the data from the package endpoint when the "/latest" endpoint has a network error', async () => {
-        server.use(http.get(latestEndpoint, () => HttpResponse.error()));
-        const actual = await registryService.getLatestPackageDetails(url, packageName);
-        expect(actual).toStrictEqual(registryMeta);
-      });
-
-      it('should return undefined when the "/latest" endpoint fails and the package endpoint returns a 404 status code', async () => {
-        server.use(http.get(latestEndpoint, () => HttpResponse.error()));
-        server.use(http.get(packageEndpoint, () => new HttpResponse(undefined, { status: 404 })));
-        const actual = await registryService.getLatestPackageDetails(url, packageName);
-        expect(actual).toBeUndefined();
-      });
-
-      it('should throw when the "/latest" endpoint fails and the package endpoint returns a 500 status code', async () => {
-        server.use(http.get(latestEndpoint, () => HttpResponse.error()));
+      it('should throw when the package endpoint returns a 500 status code', async () => {
         server.use(http.get(packageEndpoint, () => new HttpResponse(undefined, { status: 500 })));
-        const actual = registryService.getLatestPackageDetails(url, packageName);
+        const actual = registryService.getPackageDetails(url, packageName);
         await expect(actual).rejects.toThrow('Fetch request failed');
       });
 
-      it('should throw when the "/latest" endpoint fails and the package endpoint throws due to a network error', async () => {
-        server.use(http.get(latestEndpoint, () => HttpResponse.error()));
+      it('should throw when the package endpoint throws due to a network error', async () => {
         server.use(http.get(packageEndpoint, () => HttpResponse.error()));
-        const actual = registryService.getLatestPackageDetails(url, packageName);
+        const actual = registryService.getPackageDetails(url, packageName);
         await expect(actual).rejects.toThrow();
       });
 
-      it('should throw when the "/latest" endpoint fails and the package endpoint returns non-json data', async () => {
-        server.use(http.get(latestEndpoint, () => HttpResponse.error()));
+      it('should throw when the package endpoint returns non-json data', async () => {
         server.use(http.get(packageEndpoint, () => HttpResponse.text('I am not JSON')));
-        const actual = registryService.getLatestPackageDetails(url, packageName);
+        const actual = registryService.getPackageDetails(url, packageName);
         await expect(actual).rejects.toThrow();
       });
 
-      it('should throw when the "/latest" endpoint fails and the package endpoint returns invalid data', async () => {
-        server.use(http.get(latestEndpoint, () => HttpResponse.error()));
+      it('should throw when the package endpoint returns invalid data', async () => {
         server.use(http.get(packageEndpoint, () => HttpResponse.json({ 'dist-tags': false })));
-        const actual = registryService.getLatestPackageDetails(url, packageName);
+        const actual = registryService.getPackageDetails(url, packageName);
         await expect(actual).rejects.toThrow();
       });
 
-      it('should return undefined when the "/latest" endpoint fails and the package endpoint returns a payload with a latest version that is not in the versions map', async () => {
-        server.use(http.get(latestEndpoint, () => HttpResponse.error()));
+      it('should return undefined when the package endpoint returns a payload with a latest version that is not in the versions map', async () => {
         server.use(
           http.get(packageEndpoint, () =>
             HttpResponse.json({ 'dist-tags': { latest: '0.0.0' }, versions: {}, time: {} }),
           ),
         );
-        const actual = await registryService.getLatestPackageDetails(url, packageName);
+        const actual = (await registryService.getPackageDetails(url, packageName)).latest;
         expect(actual).toBeUndefined();
       });
     });
@@ -205,7 +179,6 @@ describe(PackageRegistryService.name, () => {
     describe('Registry Token with the package endpoint', () => {
       beforeEach(() => {
         server.use(
-          http.get(latestEndpoint, () => HttpResponse.error()),
           http.get(packageEndpoint, ({ request }) => {
             authHeader = request.headers.get('Authorization') ?? undefined;
             return HttpResponse.json({
@@ -219,38 +192,14 @@ describe(PackageRegistryService.name, () => {
 
       it('should include the bearer token in the request if the registryToken is provided', async () => {
         authHeader = undefined;
-        await registryService.getLatestPackageDetails(url, packageName, registryToken);
+        await registryService.getPackageDetails(url, packageName, registryToken);
         const expected = `Bearer ${registryToken}`;
         expect(authHeader).toStrictEqual(expected);
       });
 
       it('should not include the bearer token in the request if the registryToken is not provided', async () => {
         authHeader = '';
-        await registryService.getLatestPackageDetails(url, packageName);
-        expect(authHeader).toBeUndefined();
-      });
-    });
-
-    describe('Registry Token with the "/latest" endpoint', () => {
-      beforeEach(() => {
-        server.use(
-          http.get(latestEndpoint, ({ request }) => {
-            authHeader = request.headers.get('Authorization') ?? undefined;
-            return HttpResponse.json(registryMeta);
-          }),
-        );
-      });
-
-      it('should include the bearer token in the request if the registryToken is provided', async () => {
-        authHeader = undefined;
-        await registryService.getLatestPackageDetails(url, packageName, registryToken);
-        const expected = `Bearer ${registryToken}`;
-        expect(authHeader).toStrictEqual(expected);
-      });
-
-      it('should not include the bearer token in the request if the registryToken is not provided', async () => {
-        authHeader = '';
-        await registryService.getLatestPackageDetails(url, packageName);
+        await registryService.getPackageDetails(url, packageName);
         expect(authHeader).toBeUndefined();
       });
     });

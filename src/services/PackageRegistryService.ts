@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { type exec as ActionsExec } from '@actions/exec';
+import semver from 'semver';
 import {
   PackageJsonSchema,
   RegistryMetadataForVersion,
@@ -63,30 +64,23 @@ export class PackageRegistryService implements PackageRegistry {
    * @returns The package details or undefined if the registry response is a 404 (Not Found) or the latest version
    * details are not present in the response
    */
-  async getLatestPackageDetails(
+  async getPackageDetails(
     registryUrl: URL,
     packageName: string,
     registryToken?: string,
-  ): Promise<RegistryMetadataForVersion | undefined> {
-    // Attempt to get the package details from the `/latest` endpoint, which works on NPM but may not be
-    // available on other registries, such as GitHub packages; otherwise, fall back to the full package details
-    const dataFromLatest = await this.useLatestEndpoint(registryUrl, packageName, registryToken);
-    if (dataFromLatest) {
-      this.logger.debug('Registry details successfully retrieved from "/latest" endpoint');
-      return dataFromLatest;
-    }
-
+  ): Promise<{ latest?: RegistryMetadataForVersion; existingVersions: Set<string> }> {
     const url = new URL(encodeURIComponent(packageName), registryUrl);
     const headers: Record<string, string> = {};
     if (registryToken) {
       headers.Authorization = `Bearer ${registryToken}`;
     }
 
+    this.logger.debug(`Attempting to retrieve package details from registry endpoint using url "${url.toString()}"`);
     const response = await fetch(url, { headers });
 
     if (!response.ok) {
       if (response.status === NOT_FOUND) {
-        return;
+        return { existingVersions: new Set() };
       }
       throw new Error(
         `Fetch request failed using url "${url.toString()}". Error: ${response.status} "${response.statusText}".`,
@@ -94,7 +88,16 @@ export class PackageRegistryService implements PackageRegistry {
     }
 
     const data = registryMetadataSchema.parse(await response.json());
-    return data.versions[data['dist-tags'].latest];
+
+    const existingVersions = new Set(
+      Object.keys(data.time)
+        .map((x) => semver.parse(x)?.version)
+        .filter(Boolean),
+    );
+    return {
+      latest: data['dist-tags']?.latest ? data.versions?.[data['dist-tags'].latest] : undefined,
+      existingVersions,
+    };
   }
 
   private async useLatestEndpoint(
@@ -104,6 +107,7 @@ export class PackageRegistryService implements PackageRegistry {
   ): Promise<RegistryMetadataForVersion | undefined> {
     try {
       const url = new URL(`${encodeURIComponent(packageName)}/latest`, registryUrl);
+      this.logger.debug(`Attempting to retrieve package details from "/latest" endpoint using url "${url.toString()}"`);
       const headers: Record<string, string> = {};
       if (registryToken) {
         headers.Authorization = `Bearer ${registryToken}`;
