@@ -49,7 +49,7 @@ export async function run(
     logger.info(
       `Reading latest package details from registry "${inputs.registryUrl.toString()}" for package "${packageJson.name}"`,
     );
-    const latestPackageDetails = await registry.getLatestPackageDetails(
+    const latestPackageDetails = await registry.getPackageDetails(
       inputs.registryUrl,
       packageJson.name,
       inputs.registryToken,
@@ -63,21 +63,32 @@ export async function run(
     let nextVersion: SemVer | null;
     let incrementType: ReleaseType | '';
 
-    if (latestPackageDetails) {
-      if (latestPackageDetails.gitHead === github.context.sha) {
+    if (latestPackageDetails.latest) {
+      if (latestPackageDetails.latest.gitHead === github.context.sha) {
         logger.info('GitHub SHA matches latest release SHA, exiting.');
         return;
       }
 
-      currentVersion = semver.parse(latestPackageDetails.version);
+      currentVersion = semver.parse(latestPackageDetails.latest.version);
       if (!currentVersion) {
         throw new Error(
-          `The current version in the registry "${latestPackageDetails.version}" is not a valid semver value.`,
+          `The current version in the registry "${latestPackageDetails.latest.version}" is not a valid semver value.`,
         );
       }
 
       const currentTag = `v${currentVersion.toString()}${inputs.gitTagSuffix}`;
-      gitHistoryRange = { fromTag: currentTag, fromSha: latestPackageDetails.gitHead, toSha: github.context.sha };
+      gitHistoryRange = {
+        fromTag: currentTag,
+        fromSha: latestPackageDetails.latest.gitHead,
+        toSha: github.context.sha,
+      };
+    } else if (latestPackageDetails.existingVersions.size) {
+      currentVersion = Array.from(latestPackageDetails.existingVersions, (x) => semver.parse(x))
+        .filter(Boolean)
+        .toSorted((a, b) => a.compare(b) * -1)[0];
+      logger.warning(
+        `The package was found in the registry, there are no published versions available. The lasted unpublished version "${currentVersion.toString()}" will be used as the current version.`,
+      );
     } else if (packageJsonVersion) {
       currentVersion = packageJsonVersion;
       logger.warning(
@@ -100,8 +111,13 @@ export async function run(
         `Using git history to determine increment type:\n${JSON.stringify(gitHistory, undefined, JSON_INDENT)}`,
       );
       incrementType = getIncrementType(gitHistory, inputs.majorTypes, inputs.minorTypes);
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- semver.parse with semver object as input returns the same object
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- using the string version because semver.parse with the semver object returns the same object
       nextVersion = semver.parse(currentVersion.version)!.inc(incrementType);
+    }
+
+    while (latestPackageDetails.existingVersions.has(nextVersion.version)) {
+      logger.info(`next-version "${nextVersion.version}" is in the existing versions list, incrementing patch version`);
+      nextVersion = nextVersion.inc('patch');
     }
 
     logger.info(`Current package version: ${currentVersion.toString()}`);
