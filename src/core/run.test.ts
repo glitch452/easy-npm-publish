@@ -4,12 +4,12 @@ import yaml from 'yaml';
 import { FilesService } from '../services/FilesService.js';
 import { GitHistoryEntry, GitService } from '../services/GitService.js';
 import { PackageRegistryService } from '../services/PackageRegistryService.js';
+import { PackageJsonSchema } from '../types/schemas.js';
 import { run } from './run.js';
 import { getGitHubMock } from '__mocks__/getGitHubMock.js';
 import { getGitMock } from '__mocks__/getGitMock.js';
 import { getLoggerMock } from '__mocks__/getLoggerMock.js';
 import { WorkflowMock } from '__mocks__/WorkflowMock.js';
-import { PackageJsonSchema } from 'src/types/schemas.js';
 
 vi.mock('node:fs');
 const nodeFs = await vi.importActual<typeof import('node:fs')>('node:fs');
