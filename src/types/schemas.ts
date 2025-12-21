@@ -16,10 +16,27 @@ export const registryMetadataForVersionSchema = z.object({
 
 export type RegistryMetadataForVersion = z.infer<typeof registryMetadataForVersionSchema>;
 
+export const unpublishedDetails = z.object({
+  time: z.string(),
+  versions: z.string().array(),
+});
+
+export type UnpublishedDetails = z.infer<typeof unpublishedDetails>;
+
+export const timeDetails = z
+  .object({
+    unpublished: unpublishedDetails.optional(),
+    created: z.string().optional(),
+    modified: z.string().optional(),
+  })
+  .catchall(z.string().optional());
+
+export type TimeDetails = z.infer<typeof timeDetails>;
+
 export const registryMetadataSchema = z.object({
-  'dist-tags': z.object({ latest: z.string() }),
-  versions: z.record(z.string(), registryMetadataForVersionSchema.optional()),
-  time: z.record(z.string(), z.string().or(z.undefined())),
+  'dist-tags': z.object({ latest: z.string() }).optional(),
+  versions: z.record(z.string(), registryMetadataForVersionSchema.optional()).optional(),
+  time: timeDetails,
 });
 
 export type RegistryMetadata = z.infer<typeof registryMetadataSchema>;

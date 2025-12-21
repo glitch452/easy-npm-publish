@@ -7,15 +7,17 @@ branding:
   color: red
 
 runs:
-  using: node20
+  using: node24
   main: dist/index.js
 
 inputs:
-  registry-token:
-    description: An auth token with access to publish to the registry.
-    required: true
   github-token:
     description: A github token with access to write tags and releases to the repository.
+  registry-token:
+    description:
+      An auth token with access to publish to the registry. If one is not provided, OIDC auth must be configured for the
+      publish to work.
+    required: false
   changelog-titles:
     description:
       'A JSON encoded object, mapping the conventional commit type to the section title to use in the changelog for that

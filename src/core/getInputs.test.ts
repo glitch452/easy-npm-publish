@@ -297,12 +297,6 @@ describe(getInputs.name, () => {
   });
 
   describe('registryToken', () => {
-    it('should throw an error if the "registry-token" is not provided', () => {
-      workflowMock.clearInputValue('registry-token');
-      const actual = () => getInputs(workflowMock);
-      expect(actual).toThrow('registry-token');
-    });
-
     it('should return the registry token', () => {
       workflowMock.setInputValue('registry-token', '<registryToken>');
       const actual = getInputs(workflowMock).registryToken;
