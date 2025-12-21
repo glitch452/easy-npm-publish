@@ -1,11 +1,11 @@
 import type { PackageJsonSchema, RegistryMetadataForVersion } from './schemas.js';
 
 export interface PackageRegistry {
-  getLatestPackageDetails: (
+  getPackageDetails: (
     registryUrl: URL,
     packageName: string,
     registryToken?: string,
-  ) => Promise<RegistryMetadataForVersion | undefined>;
+  ) => Promise<{ latest?: RegistryMetadataForVersion; existingVersions: Set<string> }>;
   publishPackage: (
     scriptsPackagePath: string,
     packagePath: string,
