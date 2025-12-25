@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import yaml from 'yaml';
+import { WorkflowMock } from '../mocks/WorkflowMock.js';
 import { DEFAULT_TYPE_TITLES } from './constants.js';
 import { getInputs } from './getInputs.js';
-import { WorkflowMock } from '__mocks__/WorkflowMock.js';
 
 describe(getInputs.name, () => {
   const workflowMock = new WorkflowMock();

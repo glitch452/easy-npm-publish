@@ -6,7 +6,6 @@ const baseVitestConfig = baseConfig.test;
 const baseCoverage: Omit<InlineConfig['coverage'], 'reporter'> | undefined = baseVitestConfig?.coverage;
 
 const configForCi = defineConfig({
-  resolve: baseConfig.resolve,
   test: {
     ...baseVitestConfig,
     coverage: {
