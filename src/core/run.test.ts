@@ -1,15 +1,15 @@
 import path from 'node:path';
 import { fs, vol } from 'memfs';
 import yaml from 'yaml';
+import { getGitHubMock } from '../mocks/getGitHubMock.js';
+import { getGitMock } from '../mocks/getGitMock.js';
+import { getLoggerMock } from '../mocks/getLoggerMock.js';
+import { WorkflowMock } from '../mocks/WorkflowMock.js';
 import { FilesService } from '../services/FilesService.js';
 import { GitHistoryEntry, GitService } from '../services/GitService.js';
 import { PackageRegistryService } from '../services/PackageRegistryService.js';
 import { PackageJsonSchema } from '../types/schemas.js';
 import { run } from './run.js';
-import { getGitHubMock } from '__mocks__/getGitHubMock.js';
-import { getGitMock } from '__mocks__/getGitMock.js';
-import { getLoggerMock } from '__mocks__/getLoggerMock.js';
-import { WorkflowMock } from '__mocks__/WorkflowMock.js';
 
 vi.mock('node:fs');
 const nodeFs = await vi.importActual<typeof import('node:fs')>('node:fs');
