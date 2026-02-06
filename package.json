@@ -51,7 +51,7 @@
   "homepage": "https://github.com/glitch452/easy-npm-publish#readme",
   "dependencies": {
     "@actions/core": "2.0.2",
-    "@actions/exec": "2.0.0",
+    "@actions/exec": "3.0.0",
     "@actions/github": "9.0.0",
     "chardet": "2.1.1",
     "semver": "7.7.3",
