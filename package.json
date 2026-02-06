@@ -50,7 +50,7 @@
   },
   "homepage": "https://github.com/glitch452/easy-npm-publish#readme",
   "dependencies": {
-    "@actions/core": "2.0.2",
+    "@actions/core": "3.0.0",
     "@actions/exec": "3.0.0",
     "@actions/github": "9.0.0",
     "chardet": "2.1.1",
