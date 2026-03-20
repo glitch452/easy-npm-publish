@@ -48,7 +48,7 @@ describe(PackageRegistryService.name, () => {
     it('should not run the generated publish script when dryRuin is true', async () => {
       dryRun = true;
       await registryService.publishPackage(scriptsPackagePath, packagePath, packageJson, isPrivate, dryRun);
-      expect(execMock).not.toBeCalled();
+      expect(execMock).not.toHaveBeenCalled();
     });
     it('should generate and run the publish script with the "--verbose" flag when the logger isDebug() returns true', async () => {
       loggerMock.isDebug.mockReturnValue(true);
@@ -71,7 +71,7 @@ describe(PackageRegistryService.name, () => {
       it('should not run the publish script in the packageJson input when dryRuin is true and both package file paths are the same', async () => {
         dryRun = true;
         await registryService.publishPackage(scriptsPackagePath, packagePath, packageJson, isPrivate, dryRun);
-        expect(execMock).not.toBeCalled();
+        expect(execMock).not.toHaveBeenCalled();
       });
 
       it('should run the publish script in the scriptsPackagePath input when both package file paths are different', async () => {
@@ -86,7 +86,7 @@ describe(PackageRegistryService.name, () => {
         dryRun = true;
         fs.writeFileSync(scriptsPackagePath, JSON.stringify(packageJson));
         await registryService.publishPackage(scriptsPackagePath, packagePath, packageJson, isPrivate, dryRun);
-        expect(execMock).not.toBeCalled();
+        expect(execMock).not.toHaveBeenCalled();
       });
     });
   });
