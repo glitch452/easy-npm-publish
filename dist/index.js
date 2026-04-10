@@ -56096,10 +56096,385 @@ class FilesService {
 var external_node_buffer_ = __nccwpck_require__(4573);
 // EXTERNAL MODULE: ./node_modules/@kwsites/file-exists/dist/index.js
 var dist = __nccwpck_require__(7117);
+;// CONCATENATED MODULE: ./node_modules/@simple-git/args-pathspec/dist/index.mjs
+const t = /* @__PURE__ */ new WeakMap();
+function c(...n) {
+  const e = new String(n);
+  return t.set(e, n), e;
+}
+function dist_r(n) {
+  return n instanceof String && t.has(n);
+}
+function dist_o(n) {
+  return t.get(n) ?? [];
+}
+
+//# sourceMappingURL=index.mjs.map
+
 // EXTERNAL MODULE: ./node_modules/debug/src/index.js
 var src = __nccwpck_require__(2830);
 // EXTERNAL MODULE: ./node_modules/@kwsites/promise-deferred/dist/index.js
 var promise_deferred_dist = __nccwpck_require__(9997);
+;// CONCATENATED MODULE: ./node_modules/@simple-git/argv-parser/dist/index.mjs
+
+function* w(e, t) {
+  const n = t === "global";
+  for (const o of e)
+    o.isGlobal === n && (yield o);
+}
+const x = /* @__PURE__ */ new Set([
+  "--add",
+  "--edit",
+  "--remove-section",
+  "--rename-section",
+  "--replace-all",
+  "--unset",
+  "--unset-all",
+  "-e"
+]), S = /* @__PURE__ */ new Set([
+  "--get",
+  "--get-all",
+  "--get-color",
+  "--get-colorbool",
+  "--get-regexp",
+  "--get-urlmatch",
+  "--list",
+  "-l"
+]), k = /* @__PURE__ */ new Set([
+  "edit",
+  "remove-section",
+  "rename-section",
+  "set",
+  "unset"
+]), y = /* @__PURE__ */ new Set(["get", "get-color", "get-colorbool", "list"]);
+function C(e, t) {
+  for (const { name: o } of w(e, "task")) {
+    if (x.has(o))
+      return f(!0, t);
+    if (S.has(o))
+      return f(!1, t);
+  }
+  const n = t.at(0)?.toLowerCase();
+  return n === void 0 ? null : k.has(n) ? f(!0, t.slice(1)) : y.has(n) ? f(!1, t.slice(1)) : t.length === 1 ? f(!1, t) : f(!0, t);
+}
+function f(e = !1, t = []) {
+  const n = t.at(0)?.toLowerCase();
+  return n === void 0 ? null : {
+    isWrite: e,
+    isRead: !e,
+    key: n,
+    value: t.at(1)
+  };
+}
+function N(e, t) {
+  return t.isWrite && t.value !== void 0 ? { key: t.key, value: t.value, scope: e } : { key: t.key, scope: e };
+}
+function P(e) {
+  const t = e?.indexOf("=") || -1;
+  return !e || t < 0 ? null : {
+    key: e.slice(0, t).trim().toLowerCase(),
+    value: e.slice(t + 1)
+  };
+}
+function U(e) {
+  for (const { name: t } of w(e, "task"))
+    switch (t) {
+      case "--global":
+        return "global";
+      case "--system":
+        return "system";
+      case "--worktree":
+        return "worktree";
+      case "--local":
+        return "local";
+      case "--file":
+      case "-f":
+        return "file";
+    }
+  return "local";
+}
+function A({ name: e }) {
+  if (e === "-c" || e === "--config")
+    return "inline";
+  if (e === "--config-env")
+    return "env";
+}
+function* F(e) {
+  for (const t of e) {
+    const n = A(t), o = n && P(t.value);
+    o && (yield {
+      ...o,
+      scope: n
+    });
+  }
+}
+function M(e, t, n) {
+  const o = {
+    read: [],
+    write: [...F(t)]
+  };
+  return e === "config" && G(
+    o,
+    U(t),
+    C(t, n)
+  ), o;
+}
+function G(e, t, n) {
+  if (n === null)
+    return;
+  const o = N(t, n);
+  n.isWrite ? e.write.push(o) : e.read.push(o);
+}
+const v = {
+  short: /* @__PURE__ */ new Map([
+    ["c", !0]
+    //  -c <k=v>    set config key for this invocation
+  ])
+}, O = {
+  short: new Map([
+    ["C", !0],
+    //  -C <path>   change working directory
+    ["P", !1],
+    // -P          no pager (alias for --no-pager)
+    ["h", !1],
+    // -h          help
+    ["p", !1],
+    // -p          paginate
+    ["v", !1],
+    // -v          version
+    ...v.short.entries()
+  ]),
+  long: /* @__PURE__ */ new Set([
+    "attr-source",
+    "config-env",
+    "exec-path",
+    "git-dir",
+    "list-cmds",
+    "namespace",
+    "super-prefix",
+    "work-tree"
+  ])
+}, E = {
+  clone: {
+    short: /* @__PURE__ */ new Map([
+      ["b", !0],
+      // -b <branch>
+      ["j", !0],
+      // -j <n>          parallel jobs
+      ["l", !1],
+      // -l local
+      ["n", !1],
+      // -n no-checkout
+      ["o", !0],
+      // -o <name>       remote name
+      ["q", !1],
+      // -q quiet
+      ["s", !1],
+      // -s shared
+      ["u", !0]
+      // -u <upload-pack>
+    ]),
+    long: /* @__PURE__ */ new Set(["branch", "config", "jobs", "origin", "upload-pack", "u"])
+  },
+  commit: {
+    short: /* @__PURE__ */ new Map([
+      ["C", !0],
+      // -C <commit>  reuse message
+      ["F", !0],
+      // -F <file>    read message from file
+      ["c", !0],
+      // -c <commit>  reedit message
+      ["m", !0],
+      // -m <msg>
+      ["t", !0]
+      // -t <template>
+    ]),
+    long: /* @__PURE__ */ new Set(["file", "message", "reedit-message", "reuse-message", "template"])
+  },
+  config: {
+    short: /* @__PURE__ */ new Map([
+      ["e", !1],
+      // -e  open editor
+      ["f", !0],
+      //  -f <file>
+      ["l", !1]
+      // -l  list
+    ]),
+    long: /* @__PURE__ */ new Set(["blob", "comment", "default", "file", "type", "value"])
+  },
+  fetch: {
+    short: /* @__PURE__ */ new Map(),
+    long: /* @__PURE__ */ new Set(["upload-pack"])
+  },
+  pull: {
+    short: /* @__PURE__ */ new Map(),
+    long: /* @__PURE__ */ new Set(["upload-pack"])
+  },
+  push: {
+    short: /* @__PURE__ */ new Map(),
+    long: /* @__PURE__ */ new Set(["exec", "receive-pack"])
+  }
+}, I = { short: /* @__PURE__ */ new Map(), long: /* @__PURE__ */ new Set() };
+function L(e) {
+  const t = E[e ?? ""] ?? I;
+  return {
+    short: new Map([...v.short.entries(), ...t.short.entries()]),
+    long: t.long
+  };
+}
+function b(e, t = O) {
+  if (e.startsWith("--")) {
+    const n = e.indexOf("=");
+    if (n > 2)
+      return [{ name: e.slice(0, n), value: e.slice(n + 1), needsNext: !1 }];
+    const o = e.slice(2);
+    return [{ name: e, needsNext: t.long.has(o) }];
+  }
+  if (e.length === 2) {
+    const n = e.charAt(1), o = t.short.get(n);
+    return [{ name: e, needsNext: o === !0 }];
+  }
+  return R(e, t.short);
+}
+function R(e, t) {
+  const n = e.slice(1).split(""), o = [];
+  for (let a = 0; a < n.length; a++) {
+    const s = n[a], r = t.get(s);
+    if (r === void 0)
+      return [{ name: e, needsNext: !1 }];
+    if (r) {
+      const l = n.slice(a + 1).join("");
+      if (l && ![...l].every((h) => t.has(h)))
+        return o.push({ name: `-${s}`, value: l, needsNext: !1 }), o;
+    }
+    o.push({ name: `-${s}`, needsNext: r });
+  }
+  return o;
+}
+function W(e, t = []) {
+  let n = 0;
+  for (; n < e.length; ) {
+    const o = String(e[n]);
+    if (!o.startsWith("-") || o.length < 2) break;
+    const a = b(o);
+    let s = n + 1;
+    for (const r of a) {
+      const l = {
+        name: r.name,
+        value: r.value,
+        absorbedNext: !1,
+        isGlobal: !0
+      };
+      r.needsNext && l.value === void 0 && s < e.length && (l.value = String(e[s]), l.absorbedNext = !0, s++), t.push(l);
+    }
+    n = s;
+  }
+  return { flags: t, taskIndex: n };
+}
+function _(e, t, n = []) {
+  const o = L(t), a = [], s = [];
+  let r = 0;
+  for (; r < e.length; ) {
+    const l = e[r];
+    if (dist_r(l)) {
+      s.push(...dist_o(l)), r++;
+      continue;
+    }
+    const u = String(l);
+    if (u === "--") {
+      for (let c = r + 1; c < e.length; c++) {
+        const i = e[c];
+        dist_r(i) ? s.push(...dist_o(i)) : s.push(String(i));
+      }
+      break;
+    }
+    if (!u.startsWith("-") || u.length < 2) {
+      a.push(u), r++;
+      continue;
+    }
+    const h = b(u, o);
+    let d = r + 1;
+    for (const c of h) {
+      const i = {
+        name: c.name,
+        value: c.value,
+        absorbedNext: !1,
+        isGlobal: !1
+      };
+      c.needsNext && i.value === void 0 && d < e.length && !dist_r(e[d]) && (i.value = String(e[d]), i.absorbedNext = !0, d++), n.push(i);
+    }
+    r = d;
+  }
+  return { flags: n, positionals: a, pathspecs: s };
+}
+function* T({ write: e }) {
+  for (const t of e)
+    for (const n of $) {
+      const o = n(t.key);
+      o && (yield o);
+    }
+}
+function g(e, t, n = String(e)) {
+  const o = typeof e == "string" ? new RegExp(`\\s*${e}`, "i") : e;
+  return function(s) {
+    if (o.test(s))
+      return {
+        category: t,
+        message: `Configuring ${n} is not permitted without enabling ${t}`
+      };
+  };
+}
+const $ = [
+  g(
+    /^\s*protocol(.[a-z]+)?.allow/i,
+    "allowUnsafeProtocolOverride",
+    "protocol.allow"
+  ),
+  g("core.sshCommand", "allowUnsafeSshCommand"),
+  g("core.fsmonitor", "allowUnsafeFsMonitor"),
+  g("core.gitProxy", "allowUnsafeGitProxy"),
+  g("core.hooksPath", "allowUnsafeHooksPath"),
+  g("diff.external", "allowUnsafeDiffExternal")
+];
+function* j(e, t) {
+  for (const n of t)
+    /^--(upload|receive)-pack/.test(n.name) && (yield {
+      category: "allowUnsafePack",
+      message: "Use of --upload-pack or --receive-pack is not permitted without enabling allowUnsafePack"
+    }), e === "clone" && (/^-\w*u/.test(n.name) || n.name === "--u") && (yield {
+      category: "allowUnsafePack",
+      message: "Use of clone with option -u is not permitted without enabling allowUnsafePack"
+    }), e === "push" && /^--exec/.test(n.name) && (yield {
+      category: "allowUnsafePack",
+      message: "Use of push with option --exec is not permitted without enabling allowUnsafePack"
+    });
+}
+function B(e, t, n) {
+  const o = [
+    ...j(e, t),
+    ...T(n)
+  ];
+  return {
+    categories: o.reduce((s, r) => s.add(r.category), /* @__PURE__ */ new Set()),
+    vulnerabilities: o
+  };
+}
+function V(...e) {
+  const { flags: t, taskIndex: n } = W(e), o = n < e.length ? String(e[n]).toLowerCase() : null, a = o !== null ? e.slice(n + 1) : [], { positionals: s, pathspecs: r } = _(a, o, t), l = M(o, t, s);
+  return {
+    task: o,
+    flags: t.map(D),
+    paths: r,
+    config: l,
+    vulnerabilities: B(o, t, l)
+  };
+}
+function D({ value: e, name: t }) {
+  return e !== void 0 ? { name: t, value: e } : { name: t };
+}
+
+//# sourceMappingURL=index.mjs.map
+
 // EXTERNAL MODULE: external "node:events"
 var external_node_events_ = __nccwpck_require__(8474);
 ;// CONCATENATED MODULE: ./node_modules/simple-git/dist/esm/index.js
@@ -56126,26 +56501,6 @@ var __copyProps = (to, from, except, desc) => {
   return to;
 };
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
-
-// src/lib/args/pathspec.ts
-function pathspec(...paths) {
-  const key = new String(paths);
-  cache.set(key, paths);
-  return key;
-}
-function isPathSpec(path) {
-  return path instanceof String && cache.has(path);
-}
-function toPaths(pathSpec) {
-  return cache.get(pathSpec) || [];
-}
-var cache;
-var init_pathspec = __esm({
-  "src/lib/args/pathspec.ts"() {
-    "use strict";
-    cache = /* @__PURE__ */ new WeakMap();
-  }
-});
 
 // src/lib/errors/git-error.ts
 var GitError;
@@ -56324,6 +56679,7 @@ var init_util = __esm({
 });
 
 // src/lib/utils/argument-filters.ts
+
 function filterType(input, filter, def) {
   if (filter(input)) {
     return input;
@@ -56331,7 +56687,7 @@ function filterType(input, filter, def) {
   return arguments.length > 2 ? def : void 0;
 }
 function filterPrimitives(input, omit) {
-  const type = isPathSpec(input) ? "string" : typeof input;
+  const type = dist_r(input) ? "string" : typeof input;
   return /number|string|boolean/.test(type) && (!omit || !omit.includes(type));
 }
 function filterPlainObject(input) {
@@ -56344,7 +56700,6 @@ var filterArray, filterNumber, filterString, filterStringOrStringArray, filterHa
 var init_argument_filters = __esm({
   "src/lib/utils/argument-filters.ts"() {
     "use strict";
-    init_pathspec();
     init_util();
     filterArray = (input) => {
       return Array.isArray(input);
@@ -56353,7 +56708,7 @@ var init_argument_filters = __esm({
       return typeof input === "number";
     };
     filterString = (input) => {
-      return typeof input === "string" || isPathSpec(input);
+      return typeof input === "string" || dist_r(input);
     };
     filterStringOrStringArray = (input) => {
       return filterString(input) || Array.isArray(input) && input.every(filterString);
@@ -56478,13 +56833,14 @@ var init_simple_git_options = __esm({
 });
 
 // src/lib/utils/task-options.ts
+
 function appendTaskOptions(options, commands = []) {
   if (!filterPlainObject(options)) {
     return commands;
   }
   return Object.keys(options).reduce((commands2, key) => {
     const value = options[key];
-    if (isPathSpec(value)) {
+    if (dist_r(value)) {
       commands2.push(value);
     } else if (filterPrimitives(value, ["boolean"])) {
       commands2.push(key + "=" + value);
@@ -56530,7 +56886,6 @@ var init_task_options = __esm({
     "use strict";
     init_argument_filters();
     init_util();
-    init_pathspec();
   }
 });
 
@@ -58184,6 +58539,7 @@ var init_diff = __esm({
 });
 
 // src/lib/tasks/log.ts
+
 function prettyFormat(format, splitter) {
   const fields = [];
   const formatStr = [];
@@ -58227,7 +58583,7 @@ function parseLogOptions(opt = {}, customArgs = []) {
     suffix.push(`${opt.from || ""}${rangeOperator}${opt.to || ""}`);
   }
   if (filterString(opt.file)) {
-    command.push("--follow", pathspec(opt.file));
+    command.push("--follow", c(opt.file));
   }
   appendTaskOptions(userOptions(opt), command);
   return {
@@ -58270,7 +58626,6 @@ var init_log = __esm({
   "src/lib/tasks/log.ts"() {
     "use strict";
     init_log_format();
-    init_pathspec();
     init_parse_list_log_summary();
     init_utils();
     init_task();
@@ -59026,6 +59381,7 @@ var init_version = __esm({
 });
 
 // src/lib/tasks/clone.ts
+
 function createCloneTask(api, task, repoPath, ...args) {
   if (!filterString(repoPath)) {
     return configurationErrorTask(`git.${api}() requires a string 'repoPath'`);
@@ -59054,11 +59410,10 @@ var init_clone = __esm({
     "use strict";
     init_task();
     init_utils();
-    init_pathspec();
     cloneTask = (repo, directory, customArgs) => {
       const commands = ["clone", ...customArgs];
-      filterString(repo) && commands.push(pathspec(repo));
-      filterString(directory) && commands.push(pathspec(directory));
+      filterString(repo) && commands.push(c(repo));
+      filterString(directory) && commands.push(c(directory));
       return straightThroughStringTask(commands);
     };
     cloneMirrorTask = (repo, directory, customArgs) => {
@@ -60303,7 +60658,7 @@ var require_git = __commonJS({
 });
 
 // src/lib/api.ts
-init_pathspec();
+
 
 // src/lib/errors/git-construct-error.ts
 init_git_error();
@@ -60365,74 +60720,17 @@ function abortPlugin(signal) {
 }
 
 // src/lib/plugins/block-unsafe-operations-plugin.ts
-function isConfigSwitch(arg) {
-  return typeof arg === "string" && arg.trim().toLowerCase() === "-c";
-}
-function isCloneUploadPackSwitch(char, arg) {
-  if (typeof arg !== "string" || !arg.includes(char)) {
-    return false;
-  }
-  const cleaned = arg.trim().replace(/\0/g, "");
-  return /^(--no)?-{1,2}[\dlsqvnobucj]+(\s|$)/.test(cleaned);
-}
-function preventConfigBuilder(config, setting, message = String(config)) {
-  const regex = typeof config === "string" ? new RegExp(`\\s*${config}`, "i") : config;
-  return function preventCommand(options, arg, next) {
-    if (options[setting] !== true && isConfigSwitch(arg) && regex.test(next)) {
-      throw new GitPluginError(
-        void 0,
-        "unsafe",
-        `Configuring ${message} is not permitted without enabling ${setting}`
-      );
-    }
-  };
-}
-var preventUnsafeConfig = [
-  preventConfigBuilder(
-    /^\s*protocol(.[a-z]+)?.allow/i,
-    "allowUnsafeProtocolOverride",
-    "protocol.allow"
-  ),
-  preventConfigBuilder("core.sshCommand", "allowUnsafeSshCommand"),
-  preventConfigBuilder("core.gitProxy", "allowUnsafeGitProxy"),
-  preventConfigBuilder("core.hooksPath", "allowUnsafeHooksPath"),
-  preventConfigBuilder("diff.external", "allowUnsafeDiffExternal")
-];
-function preventUploadPack(arg, method) {
-  if (/^\s*--(upload|receive)-pack/.test(arg)) {
-    throw new GitPluginError(
-      void 0,
-      "unsafe",
-      `Use of --upload-pack or --receive-pack is not permitted without enabling allowUnsafePack`
-    );
-  }
-  if (method === "clone" && isCloneUploadPackSwitch("u", arg)) {
-    throw new GitPluginError(
-      void 0,
-      "unsafe",
-      `Use of clone with option -u is not permitted without enabling allowUnsafePack`
-    );
-  }
-  if (method === "push" && /^\s*--exec\b/.test(arg)) {
-    throw new GitPluginError(
-      void 0,
-      "unsafe",
-      `Use of push with option --exec is not permitted without enabling allowUnsafePack`
-    );
-  }
-}
-function blockUnsafeOperationsPlugin({
-  allowUnsafePack = false,
-  ...options
-} = {}) {
+
+function blockUnsafeOperationsPlugin(options = {}) {
   return {
     type: "spawn.args",
-    action(args, context) {
-      args.forEach((current, index) => {
-        const next = index < args.length ? args[index + 1] : "";
-        allowUnsafePack || preventUploadPack(current, context.method);
-        preventUnsafeConfig.forEach((helper) => helper(options, current, next));
-      });
+    action(args) {
+      const parsed = V(...args);
+      for (const vulnerability of parsed.vulnerabilities.vulnerabilities) {
+        if (options[vulnerability.category] !== true) {
+          throw new GitPluginError(void 0, "unsafe", vulnerability.message);
+        }
+      }
       return args;
     }
   };
@@ -60717,7 +61015,7 @@ function timeoutPlugin({
 }
 
 // src/lib/plugins/suffix-paths.plugin.ts
-init_pathspec();
+
 function suffixPathsPlugin() {
   return {
     type: "spawn.args",
@@ -60729,13 +61027,13 @@ function suffixPathsPlugin() {
       }
       for (let i = 0; i < data.length; i++) {
         const param = data[i];
-        if (isPathSpec(param)) {
-          append2(toPaths(param));
+        if (dist_r(param)) {
+          append2(dist_o(param));
           continue;
         }
         if (param === "--") {
           append2(
-            data.slice(i + 1).flatMap((item) => isPathSpec(item) && toPaths(item) || item)
+            data.slice(i + 1).flatMap((item) => dist_r(item) && dist_o(item) || item)
           );
           break;
         }
