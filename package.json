@@ -54,28 +54,28 @@
     "@actions/exec": "3.0.0",
     "@actions/github": "9.1.1",
     "chardet": "2.1.1",
-    "semver": "7.7.4",
+    "semver": "7.8.0",
     "simple-git": "3.36.0",
-    "yaml": "2.8.4",
+    "yaml": "2.9.0",
     "zod": "4.4.3"
   },
   "devDependencies": {
     "@commitlint/cli": "21.0.1",
     "@commitlint/config-conventional": "21.0.1",
     "@total-typescript/ts-reset": "0.6.1",
-    "@types/node": "24.12.2",
+    "@types/node": "24.12.4",
     "@vercel/ncc": "0.38.4",
-    "@vitest/coverage-v8": "4.1.5",
-    "@vitest/ui": "4.1.5",
+    "@vitest/coverage-v8": "4.1.6",
+    "@vitest/ui": "4.1.6",
     "eslint": "9.39.2",
-    "eslint-config-spartan": "5.19.2",
+    "eslint-config-spartan": "5.19.5",
     "husky": "9.1.7",
     "lint-staged": "17.0.4",
     "memfs": "4.57.2",
-    "msw": "2.14.3",
+    "msw": "2.14.6",
     "prettier": "3.8.3",
     "rimraf": "6.1.3",
     "typescript": "5.9.3",
-    "vitest": "4.1.5"
+    "vitest": "4.1.6"
   }
 }
