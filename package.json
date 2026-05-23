@@ -19,6 +19,7 @@
     "lint:ci": "eslint '**/*.{mjs,cjs,js,ts}'",
     "lint:inspect": "npx @eslint/config-inspector",
     "lint:nc": "eslint '**/*.{mjs,cjs,js,ts}' --report-unused-disable-directives --fix",
+    "lint:renovate": "npx --yes --package renovate -- renovate-config-validator --strict",
     "lint": "eslint '**/*.{mjs,cjs,js,ts}' --cache --report-unused-disable-directives --fix",
     "pre-commit": "lint-staged --config lint-staged.config.js",
     "prepare": "husky || true",
