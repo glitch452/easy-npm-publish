@@ -323,8 +323,10 @@ describe(getInputs.name, () => {
     });
 
     it('should return the registry url using http if the http protocol is provided', () => {
+      // eslint-disable-next-line unicorn/prefer-https -- Test behavior with no ssl
       workflowMock.setInputValue('registry-url', 'http://registry-url.com');
       const actual = getInputs(workflowMock).registryUrl.href;
+      // eslint-disable-next-line unicorn/prefer-https -- Test behavior with no ssl
       expect(actual).toBe('http://registry-url.com/');
     });
   });

@@ -206,10 +206,10 @@ describe(run.name, () => {
   });
 
   it('should use the provided "registry-url" input when writing the .npmrc file', async () => {
-    workflow.setInputValue('registry-url', 'http://example.com');
+    workflow.setInputValue('registry-url', 'https://example.com');
     await run(loggerMock, workflow, gitHubMock, git, files, registry);
     const actual = fs.readFileSync(npmrcPath).toString();
-    expect(actual).toContain('http://example.com');
+    expect(actual).toContain('https://example.com');
   });
 
   it('should use the provided "registry-token" input when writing the .npmrc file', async () => {
