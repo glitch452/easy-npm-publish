@@ -1,6 +1,12 @@
+import path from 'path';
 import { defineConfig } from 'vitest/config';
 
 const baseConfig = defineConfig({
+  resolve: {
+    alias: {
+      src: path.resolve('./src'),
+    },
+  },
   test: {
     globals: true,
     reporters: ['verbose'],
