@@ -132,6 +132,7 @@ describe(FilesService.name, () => {
 
     it('should set strict ssl to false when the registry url has an http scheme', () => {
       const registryToken = '<token>';
+      // eslint-disable-next-line unicorn/prefer-https -- Test behavior with no ssl
       const registryUrl = new URL('http://registry.npmjs.org');
       const actual = filesService.createNpmrc({ registryUrl, registryToken }).split('\n');
       const expected = 'strict-ssl=false';
