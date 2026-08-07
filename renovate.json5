@@ -6,6 +6,7 @@
     'github>glitch452/renovate-config',
     'github>glitch452/renovate-config//presets/github-action',
     'github>glitch452/renovate-config//presets/npm',
+    'github>glitch452/renovate-config//presets/automerge-non-major',
   ],
 
   // Run on Friday Mornings
