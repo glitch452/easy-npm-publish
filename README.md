@@ -15,6 +15,7 @@ git tags and publish the package.
   - [Inputs](#inputs)
   - [Outputs](#outputs)
   - [Example Usage](#example-usage)
+  - [Branching Strategy](#branching-strategy)
   - [License](#license)
 
 ## What's New
@@ -112,6 +113,15 @@ jobs:
           echo "${{ toJSON(steps.publish_npm.outputs) }}"
           echo "${{ toJSON(steps.publish_github.outputs) }}"
 ```
+
+## Branching Strategy
+
+The `release` branch is the main branch of this repository — it is the branch the built dist files and version tags
+(e.g. `v1`) are published to, and it always reflects the latest published release.
+
+All changes must be made via a pull request into the `develop` branch. Changes are not made directly against `release`.
+Once a change is merged into `develop`, the [Release GitHub Actions workflow](.github/workflows/release.yml)
+automatically publishes it to the `release` branch — there is no manual step required to port changes over.
 
 ## License
 
