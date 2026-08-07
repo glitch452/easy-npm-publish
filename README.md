@@ -2,6 +2,7 @@
 
 [![GitHub License](https://img.shields.io/github/license/glitch452/easy-npm-publish)](https://choosealicense.com/licenses/mit/)
 [![GitHub Release](https://img.shields.io/github/v/release/glitch452/easy-npm-publish) ](https://github.com/glitch452/easy-npm-publish/releases)
+[![GitHub Marketplace](https://img.shields.io/badge/marketplace-easy--npm--publish-blue?logo=github)](https://github.com/marketplace/actions/easy-npm-publish)
 
 Use [Conventional Commits](https://www.conventionalcommits.org) to automatically update the package version, update the
 git tags and publish the package.
