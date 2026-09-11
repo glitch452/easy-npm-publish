@@ -200,7 +200,7 @@ describe(run.name, () => {
     const expected = expect.objectContaining({
       message: expect.stringContaining('ENOENT: no such file or directory'),
       code: 'ENOENT',
-      path: path.dirname(newNpmrcPath),
+      path: newNpmrcPath,
     });
     expect(setFailedSpy).toHaveBeenCalledExactlyOnceWith(expected);
   });
