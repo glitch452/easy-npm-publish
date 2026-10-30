@@ -69,7 +69,7 @@
     "@vitest/coverage-v8": "5.0.5",
     "@vitest/ui": "5.0.5",
     "eslint": "9.39.5",
-    "eslint-config-spartan": "7.6.3",
+    "eslint-config-spartan": "7.6.5",
     "husky": "9.1.7",
     "lint-staged": "17.6.0",
     "memfs": "4.80.0",
